@@ -11,14 +11,12 @@ def frange(start, stop, step):
         r += step
 
 # Arm lengths
-ul_val = 4
-ll_val = 7
+ul_val = 8
+ll_val = 10
 
 # Target location
-radius = 6
-tx_val = -1
-ty_val = 0
-tz_val = 6
+radius = 6 * sqrt(2)
+tz_val = 12
 
 offset_matrix = Matrix([-2, 0])
 
@@ -38,9 +36,9 @@ rot_matrix = Matrix([(cos(arm_theta), -sin(arm_theta)), (sin(arm_theta), cos(arm
 dist = sqrt(tx**2 + ty**2 + tz**2)
 alpha = (ll**2 - ul**2 - dist**2) / 2
 
-jx1 = (sqrt(tx**2 * tz**2 * ul**2 + tz**4 * ul**2 - tz**2 * alpha**2) - tx * alpha)/(tx + tz**2)
+jx1 = (sqrt(tx**2 * tz**2 * ul**2 + tz**4 * ul**2 - tz**2 * alpha**2) - tx * alpha)/(tx**2 + tz**2)
 
-jx2 = (-sqrt(tx**2 * tz**2 * ul**2 + tz**4 * ul**2 - tz**2 * alpha**2) - tx * alpha)/(tx + tz**2)
+jx2 = (-sqrt(tx**2 * tz**2 * ul**2 + tz**4 * ul**2 - tz**2 * alpha**2) - tx * alpha)/(tx**2 + tz**2)
 
 jz1 = acos(jx1/ul)
 jz2 = acos(jx2/ul)
@@ -60,7 +58,8 @@ jx2 = jx2.subs([
 for theta in frange(0, 2*pi.evalf(), 0.1):
     print 'theta %.2f' % (theta * 180 / pi).evalf()
 
-    target = Matrix([radius * theta / (2 * pi) * cos(theta), radius * theta / (2 * pi) * sin(theta)])
+    #target = Matrix([radius * theta / (2 * pi) * cos(theta), radius * theta / (2 * pi) * sin(theta)])
+    target = Matrix([radius * cos(theta), radius * sin(theta)])
 
     flag = 0
     target_val = (rot_matrix * target + offset_matrix).subs([(arm_theta, 0)])
