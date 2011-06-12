@@ -20,6 +20,8 @@ tx_val = -1
 ty_val = 0
 tz_val = 6
 
+offset_matrix = Matrix([-2, 0])
+
 # Symbols
 ul = Symbol('U')
 ll = Symbol('L')
@@ -28,11 +30,10 @@ tx = Symbol('TX')
 ty = Symbol('TY')
 tz = Symbol('TZ')
 
-# Functions
 arm_theta = Symbol('at')
-rot_matrix = Matrix([(cos(arm_theta), -sin(arm_theta)), (sin(arm_theta), cos(arm_theta))])
 
-offset_matrix = Matrix([-2, 0])
+# Functions
+rot_matrix = Matrix([(cos(arm_theta), -sin(arm_theta)), (sin(arm_theta), cos(arm_theta))])
 
 dist = sqrt(tx**2 + ty**2 + tz**2)
 alpha = (ll**2 - ul**2 - dist**2) / 2
@@ -44,6 +45,7 @@ jx2 = (-sqrt(tx**2 * tz**2 * ul**2 + tz**4 * ul**2 - tz**2 * alpha**2) - tx * al
 jz1 = acos(jx1/ul)
 jz2 = acos(jx2/ul)
 
+# Initial substitution
 jx1 = jx1.subs([
     (ul, ul_val), 
     (ll, ll_val),
@@ -54,6 +56,7 @@ jx2 = jx2.subs([
     (ll, ll_val),
     (tz, tz_val)])
 
+# Making the spiral
 for theta in frange(0, 2*pi.evalf(), 0.1):
     print 'theta %.2f' % (theta * 180 / pi).evalf()
 
