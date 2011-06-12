@@ -10,20 +10,29 @@ def frange(start, stop, step):
         yield r
         r += step
 
+# Arm lengths
 ul_val = 4
 ll_val = 7
 
+# Target location
 radius = 6
 tx_val = -1
 ty_val = 0
-tz_val = 8
+tz_val = 6
 
+# Symbols
 ul = Symbol('U')
 ll = Symbol('L')
 
 tx = Symbol('TX')
 ty = Symbol('TY')
 tz = Symbol('TZ')
+
+# Functions
+arm_theta = Symbol('at')
+rot_matrix = Matrix([(cos(arm_theta), -sin(arm_theta)), (sin(arm_theta), cos(arm_theta))])
+
+offset_matrix = Matrix([-2, 0])
 
 dist = sqrt(tx**2 + ty**2 + tz**2)
 alpha = (ll**2 - ul**2 - dist**2) / 2
@@ -46,21 +55,24 @@ jx2 = jx2.subs([
     (tz, tz_val)])
 
 for theta in frange(0, 2*pi.evalf(), 0.1):
+    print 'theta %.2f' % (theta * 180 / pi).evalf()
+
+    target = Matrix([radius * theta / (2 * pi) * cos(theta), radius * theta / (2 * pi) * sin(theta)])
+
     flag = 0
-    tx_val = radius * cos(theta) - 1.5
-    ty_val = radius * sin(theta)
+    target_val = (rot_matrix * target + offset_matrix).subs([(arm_theta, 0)])
 
     jx_val1 = jx1.subs([
-        (tx, tx_val),
-        (ty, ty_val)])
+        (tx, target_val[0]),
+        (ty, target_val[1])])
 
     jx_val2 = jx2.subs([
-        (tx, tx_val),
-        (ty, ty_val)])
+        (tx, target_val[0]),
+        (ty, target_val[1])])
 
-    print 'theta %.2f' % (theta * 180 / pi).evalf()
-    print 'xpos %.2f' % tx_val.evalf()
-    print 'ypos %.2f' % ty_val.evalf()
+    print 'Arm 1'
+    print 'xpos %.2f' % target_val[0].evalf()
+    print 'ypos %.2f' % target_val[1].evalf()
 
     if jx_val1.evalf().is_real:
         print 'jx1: %.2f' % jx_val1.evalf()
@@ -71,4 +83,51 @@ for theta in frange(0, 2*pi.evalf(), 0.1):
     if not flag:
         print 'NO REAL ANSWER'
 
+    flag = 0
+    target_val = (rot_matrix * target + offset_matrix).subs([(arm_theta, 2 * pi / 3)])
+
+    jx_val1 = jx1.subs([
+        (tx, target_val[0]),
+        (ty, target_val[1])])
+
+    jx_val2 = jx2.subs([
+        (tx, target_val[0]),
+        (ty, target_val[1])])
+
+    print 'Arm 2'
+    print 'xpos %.2f' % target_val[0].evalf()
+    print 'ypos %.2f' % target_val[1].evalf()
+
+    if jx_val1.evalf().is_real:
+        print 'jx1: %.2f' % jx_val1.evalf()
+        flag += 1
+    if jx_val2.evalf().is_real:
+        print 'jx2: %.2f' % jx_val2.evalf()
+        flag += 1
+    if not flag:
+        print 'NO REAL ANSWER'
+
+    flag = 0
+    target_val = (rot_matrix * target + offset_matrix).subs([(arm_theta, 4 * pi / 3)])
+
+    jx_val1 = jx1.subs([
+        (tx, target_val[0]),
+        (ty, target_val[1])])
+
+    jx_val2 = jx2.subs([
+        (tx, target_val[0]),
+        (ty, target_val[1])])
+
+    print 'Arm 3'
+    print 'xpos %.2f' % target_val[0].evalf()
+    print 'ypos %.2f' % target_val[1].evalf()
+
+    if jx_val1.evalf().is_real:
+        print 'jx1: %.2f' % jx_val1.evalf()
+        flag += 1
+    if jx_val2.evalf().is_real:
+        print 'jx2: %.2f' % jx_val2.evalf()
+        flag += 1
+    if not flag:
+        print 'NO REAL ANSWER'
     print '\n'
