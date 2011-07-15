@@ -1,8 +1,9 @@
 #include "i2c.h"
 
+static const char SLV_Addr = 0x90;
+
 static volatile int I2C_State = 0;
-char SLV_Data = 'a';
-char SLV_Addr = 0x90;                  // Address is 0x48<<1 for R/W
+static char SLV_Data = 'a';
 
 void i2c_setup() {
 	USICTL0 = USIPE6+USIPE7+USISWRST;    // Port & USI mode setup
@@ -18,16 +19,13 @@ void i2c_setup() {
 // USI interrupt service routine
 //******************************************************
 #pragma vector = USI_VECTOR
-__interrupt void USI_TXRX (void)
-{
-	if (USICTL1 & USISTTIFG)             // Start entry?
-	{
+__interrupt void USI_TXRX (void) {
+	if (USICTL1 & USISTTIFG) {             // Start entry?
 		P1OUT |= 0x01;                     // LED on: Sequence start
 		I2C_State = 2;                     // Enter 1st state on start
 	}
 
-	switch(I2C_State)
-	{
+	switch(I2C_State) {
 		case 0: //Idle, should not get here
 			break;
 
@@ -38,19 +36,15 @@ __interrupt void USI_TXRX (void)
 			break;
 
 		case 4: // Process Address and send (N)Ack
-			if (USISRL & 0x01)       // If read...
-				SLV_Addr++;            // Save R/W bit
 			USICTL0 |= USIOE;        // SDA = output
-			if (USISRL == SLV_Addr)  // Address match?
-			{
+			if (USISRL == (SLV_Addr | 0x1)) { // Address match?
 				USISRL = 0x00;         // Send Ack
-				P1OUT ^= 0x01;        // LED off
+				P1OUT &= ~0x01;        // LED off
 				I2C_State = 8;         // Go to next state: TX data
 			}
-			else
-			{
+			else {
 				USISRL = 0xFF;         // Send NAck
-				P1OUT ^= 0x01;         // LED on: error
+				P1OUT |= 0x01;         // LED on: error
 				I2C_State = 6;         // Go to next state: prep for next Start
 			}
 			USICNT |= 0x01;          // Bit counter = 1, send (N)Ack bit
@@ -58,7 +52,6 @@ __interrupt void USI_TXRX (void)
 
 		case 6: // Prep for Start condition
 			USICTL0 &= ~USIOE;       // SDA = input
-			SLV_Addr = 0x90;         // Reset slave address
 			I2C_State = 0;           // Reset state machine
 			break;
 
@@ -76,18 +69,14 @@ __interrupt void USI_TXRX (void)
 			break;
 
 		case 12:// Process Data Ack/NAck
-			if (USISRL & 0x01)       // If Nack received...
-			{
+			if (USISRL & 0x01) {      // If Nack received...
 				P1OUT |= 0x01;         // LED on: error
 			}
-			else                     // Ack received
-			{
+			else {                    // Ack received
 				P1OUT &= ~0x01;        // LED off
-				SLV_Data++;            // Increment Slave data
 			}
 			// Prep for Start condition
 			USICTL0 &= ~USIOE;       // SDA = input
-			SLV_Addr = 0x90;         // Reset slave address
 			I2C_State = 0;           // Reset state machine
 			break;
 	}

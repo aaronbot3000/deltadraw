@@ -2,28 +2,32 @@
 
 #include "i2c.h"
 
-void main(void)
-{
-	WDTCTL = WDTPW + WDTHOLD;            // Stop watchdog
-	if (CALBC1_12MHZ ==0xFF || CALDCO_12MHZ == 0xFF)                                     
-	{  
-		while(1);                          // If calibration constants erased
+void setup() {
+	// Stop watchdog
+	WDTCTL = WDTPW + WDTHOLD;
+	if (CALBC1_12MHZ ==0xFF || CALDCO_12MHZ == 0xFF) {  
+		// If calibration constants erased
 		// do not load, trap CPU!!
-	}   
-	BCSCTL1 = CALBC1_12MHZ;               // Set DCO
+		while(1) P1OUT ^= 0x01; 
+	}
+	
+	// Set DCO
+	BCSCTL1 = CALBC1_12MHZ;
 	DCOCTL = CALDCO_12MHZ;
 
-	//P1OUT = 0xC0;                        // P1.6 & P1.7 Pullups
-	//P1REN |= 0xC0;                       // P1.6 & P1.7 Pullups
-	P1DIR = 0xFF;                        // Unused pins as outputs
+	// Unused pins as outputs
+	P1DIR = 0xFF;
 	P2OUT = 0;
 	P2DIR = 0xFF;
+}
+
+void main(void) {
+	setup();	
 
 	i2c_setup();
 
-	while(1)
-	{
-		LPM0;                              // CPU off, await USI interrupt
-		_NOP();                            // Used for IAR
+	while(1) {
+		// CPU off, await USI interrupt
+		LPM0;
 	}
 }
