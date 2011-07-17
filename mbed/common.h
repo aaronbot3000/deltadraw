@@ -1,23 +1,40 @@
 #ifndef COMMON_H
 #define COMMON_H
 
+#define ARM_UPPER_LEN 5
+#define ARM_LOWER_LEN 10.5
+
+#define HAND_XOFF  1.09725
+#define HAND_ZOFF -0.20975
+#define TOOL_ZOFF -1.78000
+
+#define SERVO_XOFF -2.2085
+#define SERVO_ZOFF  0.51
+
 typedef enum {
     SUCCESS,
     FAILURE
 } Status;
 
-typedef uint8_t  U08;
-typedef uint16_t U16;
-typedef uint32_t U32;
-typedef uint64_t U64;
+typedef unsigned char  U08;
+typedef unsigned short U16;
+typedef unsigned int U32;
+typedef unsigned long long U64;
 
-typedef int8_t  S08;
-typedef int16_t S16;
-typedef int32_t S32;
-typedef int64_t S64;
+typedef char  S08;
+typedef short S16;
+typedef int S32;
+typedef long long S64;
 
 typedef float F32;
 typedef double F64;
+
+struct Point{
+    F32 x;
+    F32 y;
+    F32 z;
+};
+
 
 
 #endif
