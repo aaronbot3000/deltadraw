@@ -2,13 +2,14 @@
 
 static PwmOut servos[3] = {PwmOut(p21), PwmOut(p22), PwmOut(p23)};
 
-void servo_setup() {
+void servos_setup() {
     servos[0].period(0.020);
     servos[1].period(0.020);
     servos[2].period(0.020);
 }
 
-Status servo_set_angle(Servo servo, S32 angle) {
+Status servo_set_angle(Servo servo, F32 angle) {
+    //pc.printf("Setting servo %d to %0.2f\n", servo, angle * 180.0 / 3.141592);
     if (angle > SERVO_MAX_ANGLE || angle < SERVO_MIN_ANGLE)
         return FAILURE;
         

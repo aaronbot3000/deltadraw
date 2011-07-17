@@ -1,6 +1,8 @@
 #ifndef COMMON_H
 #define COMMON_H
 
+#include "mbed.h"
+
 #define ARM_UPPER_LEN 5
 #define ARM_LOWER_LEN 10.5
 
@@ -10,6 +12,8 @@
 
 #define SERVO_XOFF -2.2085
 #define SERVO_ZOFF  0.51
+
+#define DEBUG
 
 typedef enum {
     SUCCESS,
