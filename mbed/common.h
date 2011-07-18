@@ -8,6 +8,7 @@
 
 #define HAND_XOFF  1.09725
 #define HAND_ZOFF -0.20975
+
 #define TOOL_ZOFF -1.78000
 
 #define SERVO_XOFF -2.2085
