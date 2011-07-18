@@ -32,12 +32,10 @@ Status set_position(Point target) {
 
     for (int servo = 0; servo < 3; servo++) {
         // rotate coordinates
-        if (servo == 1)
+        if (servo == SERVO_120)
             target_rot = rotate_xy(target, SIN_120, COS_120);
-        if (servo == 2)
+        if (servo == SERVO_240)
             target_rot = rotate_xy(target, SIN_240, COS_240);
-            
-        //printf("%.2f, %.2f\n", target_rot.x, target_rot.y);
     
         // Add servo offset and hand offset
         trans.x = target_rot.x + SERVO_XOFF + HAND_XOFF;
@@ -48,6 +46,7 @@ Status set_position(Point target) {
         lower_radius = sqrt(r2(ARM_LOWER_LEN) - r2(trans.y));
 
         dist     = hypot(trans.x, trans.z);
+        // Inverse square root!!!
         inv_dist = 1 / dist;
 
         // Bounds checking
@@ -55,8 +54,7 @@ Status set_position(Point target) {
             dist < (lower_radius - ARM_UPPER_LEN))
             return FAILURE;
 
-        alpha = (r2(ARM_UPPER_LEN) - r2(lower_radius) + r2(dist)) / 
-            (2.0 * dist);
+        alpha = (r2(ARM_UPPER_LEN) - r2(lower_radius) + r2(dist)) * 0.5 * inv_dist;
         
         x2 = (trans.x * alpha * inv_dist);
         z2 = (trans.z * alpha * inv_dist);

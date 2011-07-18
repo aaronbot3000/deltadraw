@@ -26,7 +26,7 @@ typedef unsigned short U16;
 typedef unsigned int U32;
 typedef unsigned long long U64;
 
-typedef char  S08;
+typedef signed char  S08;
 typedef short S16;
 typedef int S32;
 typedef long long S64;
@@ -34,7 +34,7 @@ typedef long long S64;
 typedef float F32;
 typedef double F64;
 
-struct Point{
+struct Point {
     F32 x;
     F32 y;
     F32 z;

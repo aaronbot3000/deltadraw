@@ -3,84 +3,36 @@
 #include "common.h"
 #include "servo.h"
 #include "positioner.h"
+#include "planner.h"
 
 Serial pc(USBTX, USBRX); // tx, rx
 
 int main() {
-    Timer timer;
-    Point pos;
-    Status ret;
+    Planner planner;
+    
     servos_setup();
-    pos.x = 1;
-    pos.y = 0;
-    pos.z = 7.5;
-    F32 height = 9.5;
+    planner_setup(&planner);
+    
+    Point a, b, c, d;
+    a.x =  2; a.y =  2; a.z = 8;
+    b.x = -2; b.y =  2; b.z = 9;
+    c.x = 2; c.y = -2; c.z = 8;
+    d.x =  2; d.y = -2; d.z = 10;
+    
+    planner.buffer[0] = a;
+    planner.buffer[1] = b;
+    planner.buffer[2] = c;
+    planner.buffer[3] = d;
+    
+    planner.current = 0;
+    planner.next = 9;
+    planner.current_pos = a;
+    
+    S32 counter = 0;
     while (1) {
-    /*
-        pos.x = 2;
-        pos.y = 0;
-        pos.z = 9.5;
-        
-        set_position(pos);
-        */
-        
-        for (F32 x=-2; x<2; x+=.001) {
-           pos.x = x;
-           pos.y = 2;
-           pos.z = height;
-           timer.start();
-           ret = set_position(pos);
-           timer.stop();
-           //pc.printf("Returned %d in %d us\n", ret, timer.read_us());
-           timer.reset();
-           //wait_ms(100);
-        }
-        for (F32 x=2; x>-2; x-=.001) {
-           pos.x = 2;
-           pos.y = x;
-           pos.z = height;
-           timer.start();
-           ret = set_position(pos);
-           timer.stop();
-           //pc.printf("Returned %d in %d us\n", ret, timer.read_us());
-           timer.reset();
-           //wait_ms(100);
-        }
-        for (F32 x=2; x>-2; x-=.001) {
-           pos.x = x;
-           pos.y = -2;
-           pos.z = height;
-           timer.start();
-           ret = set_position(pos);
-           timer.stop();
-           //pc.printf("Returned %d in %d us\n", ret, timer.read_us());
-           timer.reset();
-           //wait_ms(100);
-        }
-        
-        for (F32 x=-2; x<2; x+=.001) {
-           pos.x = -2;
-           pos.y = x;
-           pos.z = height;
-           timer.start();
-           ret = set_position(pos);
-           timer.stop();
-           //pc.printf("Returned %d in %d us\n", ret, timer.read_us());
-           timer.reset();
-           //wait_ms(100);
-        }
-        /*
-         for (F32 x=2; x>-2; x-=.001) {
-           pos.x = -2;
-           pos.y = x;
-           pos.z = 10.5;
-           timer.start();
-           ret = set_position(pos);
-           timer.stop();
-           //pc.printf("Returned %d in %d us\n", ret, timer.read_us());
-           timer.reset();
-           //wait_ms(100);
-        }
-        */
+        //if (counter % 128 == 0)
+        //    pc.printf("%.2f, %.2f, %.2f\n", planner.current_pos.x, planner.current_pos.y, planner.current_pos.z);
+        planner_process(&planner);
+        counter++;
     }
 }
