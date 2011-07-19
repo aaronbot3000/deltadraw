@@ -14,6 +14,8 @@
 #define SERVO_XOFF -2.2085
 #define SERVO_ZOFF  0.51
 
+#define MAP(a, b1, b2, x1, x2) (((F32)((a) - (b1)) / (F32)((b2) - (b1))) * ((x2) - (x1)) + (x1)) 
+
 #define DEBUG
 
 typedef enum {

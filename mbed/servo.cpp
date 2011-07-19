@@ -14,8 +14,9 @@ Status servo_set_angle(Servo servo, F32 angle) {
         return FAILURE;
         
     // Map the servo's value in degrees to the value in usec
-    F32 us = ((F32)(angle - SERVO_MIN_ANGLE) / (F32)(SERVO_MAX_ANGLE - SERVO_MIN_ANGLE)) *
-               (SERVO_MAX_PULSE - SERVO_MIN_PULSE) + SERVO_MIN_PULSE;
+    F32 us = MAP(angle, SERVO_MIN_ANGLE, SERVO_MAX_ANGLE, SERVO_MIN_PULSE, SERVO_MAX_PULSE);
+    //((F32)(angle - SERVO_MIN_ANGLE) / (F32)(SERVO_MAX_ANGLE - SERVO_MIN_ANGLE)) *
+    //           (SERVO_MAX_PULSE - SERVO_MIN_PULSE) + SERVO_MIN_PULSE;
     servos[servo].pulsewidth_us((S32)us);
     return SUCCESS;
 }
