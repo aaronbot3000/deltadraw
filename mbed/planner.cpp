@@ -5,103 +5,152 @@ inline F32 dist_between(Point a, Point b) {
 }
 
 void planner_setup(Planner* planner) {
+    // Initialize circular buffer
     planner->current = 0;
-    planner->next = 1;
-    planner->buffer[planner->current].x = 0;
-    planner->buffer[planner->current].y = 0;
-    planner->buffer[planner->current].z = 7.5;
+    planner->next = 0;
+    
     planner->current_pos.x = 0;
     planner->current_pos.y = 0;
-    planner->current_pos.z = 7.5;
+    planner->current_pos.z = START_HEIGHT;
+    
     planner->prev_dist = 0;
-    planner->state = PLR_ACCL;
+    
     set_position(planner->current_pos);
 }
 
+Status reset_position(Planner* planner) {
+    Point goal;
+    goal.x = 0;
+    goal.y = 0;
+    goal.z = START_HEIGHT;
+    return goto_point(planner, goal);
+}
+
 Status add_point_to_buffer(Planner* planner, Point in) {
-    if (planner->next == planner->current)
+    if (INC_ONE(planner->next) == planner->current)
         return FAILURE;
     planner->buffer[planner->next] = in;
     planner->next = INC_ONE(planner->next);
     return SUCCESS;
 }
 
-Status planner_process(Planner* planner) {
-    Point goal = planner->buffer[planner->current];
+void clear_buffer(Planner* planner) {
+    // Initial location
+    planner->next = planner->current;
+}
+
+Status goto_point(Planner* planner, F32 x, F32 y, F32 z) {
+    Point goal;
+    goal.x = x;
+    goal.y = y;
+    goal.z = z;
+    return goto_point(planner, goal);
+}
+
+Status goto_point(Planner* planner, Point goal) {
     Point cur  = planner->current_pos;
-    F32 step = 0, dist;
+    F32 step = 0, inv_vec_mag;
+    F32 dx, dy, dz;
+    F32 dist, full_dist, prev_dist;
+    
+    Planner_State state = PLR_ACCL;
 
-    if (planner->state == PLR_ACCL) {
-        if (planner->full_dist - planner->prev_dist > ACCL_ZONE)
-            planner->state = PLR_FULL;
+    dx = goal.x - cur.x;
+    dy = goal.y - cur.y;
+    dz = goal.z - cur.z;
 
-        else if (planner->prev_dist < ACCL_ZONE)
-            planner->state = PLR_DECL;
+    dist = dist_between(cur, goal);
+    full_dist = dist;
+    prev_dist = dist;
+    
+    if (dist < MIN_STEP_SIZE)
+        return SUCCESS;
 
-        else
-            step = MAP(planner->full_dist - planner->prev_dist, 0, ACCL_ZONE, MIN_STEP_SIZE, MAX_STEP_SIZE);
-    }
-    if (planner->state == PLR_FULL) {
-        if (planner->prev_dist < ACCL_ZONE)
-            planner->state = PLR_DECL;
-
-        else
-            step = MAX_STEP_SIZE;
-    }
-    if (planner->state == PLR_DECL) {
-        Point test_step;
-        step = MAP(planner->prev_dist, 0, ACCL_ZONE, MIN_STEP_SIZE, MAX_STEP_SIZE);
-
-        test_step.x = cur.x + planner->dx * step;
-        test_step.y = cur.y + planner->dy * step;
-        test_step.z = cur.z + planner->dz * step;
-        
-        dist = dist_between(test_step, goal);
-        if (dist >= planner->prev_dist) {
-            planner->state = PLR_NEXT;
+    // Inverse square root!!!
+    inv_vec_mag = 1 / dist;
+    dx = dx * inv_vec_mag;
+    dy = dy * inv_vec_mag;
+    dz = dz * inv_vec_mag;
+    
+    // TODO: think of a better way to exit
+    while (1) {
+        if (state == PLR_ACCL) {
+            if (full_dist - prev_dist > ACCL_ZONE)
+                state = PLR_FULL;
+    
+            else if (prev_dist < ACCL_ZONE)
+                state = PLR_DECL;
+    
+            else
+                step = MAP(full_dist - prev_dist, 0, ACCL_ZONE, MIN_STEP_SIZE, MAX_STEP_SIZE);
         }
+        if (state == PLR_FULL) {
+            if (prev_dist < ACCL_ZONE)
+                state = PLR_DECL;
+    
+            else
+                step = MAX_STEP_SIZE;
+        }
+        if (state == PLR_DECL) {
+            Point test_step;
+            step = MAP(prev_dist, 0, ACCL_ZONE, MIN_STEP_SIZE, MAX_STEP_SIZE);
+    
+            test_step.x = cur.x + dx * step;
+            test_step.y = cur.y + dy * step;
+            test_step.z = cur.z + dz * step;
+            
+            dist = dist_between(test_step, goal);
+            
+//            pc.printf("dist: %.15f, prev_dist: %.15f\n", dist, prev_dist);
+            if (dist >= prev_dist || dist < MIN_STEP_SIZE) {
+                // This corrects accumulated error
+                cur.x = goal.x;
+                cur.y = goal.y;
+                cur.z = goal.z;
+                break;
+            }
+        }
+        
+        cur.x += dx * step;
+        cur.y += dy * step;
+        cur.z += dz * step;
+    
+        if (set_position(cur) != SUCCESS)
+            return FAILURE;
+            
+        prev_dist = dist_between(cur, goal);
     }
-    if (planner->state == PLR_NEXT) {
-        F32 inv_vec_mag, dx, dy, dz;
+    planner->current_pos = cur;
+    return SUCCESS;
+}
+
+Status planner_process(Planner* planner) {
+    if (planner->current == planner->next)
+        return SUCCESS;
+    if (goto_point(planner, planner->buffer[planner->current]) == SUCCESS) {
 
         if (INC_ONE(planner->current) == planner->next)
-            return SUCCESS;
-
-        cur.x = goal.x;
-        cur.y = goal.y;
-        cur.z = goal.z;
+            return END_PAT;
 
         planner->current = INC_ONE(planner->current);
-        goal = planner->buffer[planner->current];
 
-        dx = goal.x - cur.x;
-        dy = goal.y - cur.y;
-        dz = goal.z - cur.z;
-
-        dist = dist_between(cur, goal);
-        planner->full_dist = dist;
-
-        // Inverse square root!!!
-        inv_vec_mag = 1 / dist;
-        planner->dx = dx * inv_vec_mag;
-        planner->dy = dy * inv_vec_mag;
-        planner->dz = dz * inv_vec_mag;
-        
-        planner->state = PLR_WAIT;
+        return SUCCESS;
     }
+    return FAILURE;
+}
 
-    if (planner->state != PLR_WAIT) {
-        cur.x += planner->dx * step;
-        cur.y += planner->dy * step;
-        cur.z += planner->dz * step;
-    
-        set_position(cur);
+Status troll_up(Planner* planner) {
+    if (planner->current_pos.z - 0.0001 > MIN_HEIGHT) {
+        planner->current_pos.z -= MIN_STEP_SIZE;
+        return set_position(planner->current_pos);
     }
-    else
-        planner->state = PLR_ACCL;
-        
-    planner->current_pos = cur;
-    planner->prev_dist = dist_between(cur, goal);
-    
-    return SUCCESS;
+    return FAILURE;
+}
+
+Status troll_down(Planner* planner) {
+    if (planner->current_pos.z + MIN_STEP_SIZE < MAX_HEIGHT) {
+        planner->current_pos.z += MIN_STEP_SIZE;
+        return set_position(planner->current_pos);
+    }
+    return FAILURE;
 }

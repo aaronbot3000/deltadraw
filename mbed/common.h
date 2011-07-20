@@ -14,13 +14,19 @@
 #define SERVO_XOFF -2.2085
 #define SERVO_ZOFF  0.51
 
+#define START_HEIGHT 7 // inches
+#define MIN_HEIGHT 7.5
+#define MAX_HEIGHT 12
+
+#define MAX(a, b) ((a) > (b) ? (a) : (b))
 #define MAP(a, b1, b2, x1, x2) (((F32)((a) - (b1)) / (F32)((b2) - (b1))) * ((x2) - (x1)) + (x1)) 
 
 #define DEBUG
 
 typedef enum {
     SUCCESS,
-    FAILURE
+    FAILURE,
+    END_PAT
 } Status;
 
 typedef unsigned char  U08;
@@ -41,7 +47,5 @@ struct Point {
     F32 y;
     F32 z;
 };
-
-
 
 #endif

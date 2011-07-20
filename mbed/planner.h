@@ -4,12 +4,13 @@
 #include "common.h"
 #include "positioner.h"
 
-#define PLANNER_BUFFER_SIZE 10
+#define PLANNER_BUFFER_SIZE 16
 
-#define MAX_STEP_SIZE   0.0025
-#define MIN_STEP_SIZE   0.0005
+#define MAX_STEP_SIZE   0.0040
+#define MIN_STEP_SIZE   0.0001
 
-#define ACCL_ZONE 1 // inches
+#define ACCL_ZONE .75 // inches
+
 
 #define INC_ONE(a) (((a) + 1) % PLANNER_BUFFER_SIZE)
 
@@ -34,8 +35,6 @@ struct Planner {
     
     F32 prev_dist;
     F32 full_dist;
-    
-    Planner_State state;
 };
 
 #ifdef DEBUG
@@ -43,7 +42,15 @@ extern Serial pc;
 #endif
 
 void planner_setup(Planner* planner);
+Status reset_position(Planner* planner);
+
 Status add_point_to_buffer(Planner* planner, Point in);
+void clear_buffer(Planner* planner);
+Status goto_point(Planner* planner, F32 x, F32 y, F32 z);
+Status goto_point(Planner* planner, Point goal);
 Status planner_process(Planner* planner);
+
+Status troll_up(Planner* planner);
+Status troll_down(Planner* planner);
 
 #endif
