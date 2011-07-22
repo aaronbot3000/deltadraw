@@ -26,8 +26,10 @@
 </option>
 <option id="com.ti.ccstudio.buildDefinitions.MSP430_3.3.compilerID.INCLUDE_PATH.1428981787" superClass="com.ti.ccstudio.buildDefinitions.MSP430_3.3.compilerID.INCLUDE_PATH" valueType="includePath">
 <listOptionValue builtIn="false" value="&quot;${CCS_INSTALL_ROOT}/msp430/include&quot;"/>
+<listOptionValue builtIn="false" value="&quot;${PROJECT_ROOT}/CapacitiveTouchLibrary&quot;"/>
 <listOptionValue builtIn="false" value="&quot;${CG_TOOL_ROOT}/include&quot;"/>
 </option>
+<option id="com.ti.ccstudio.buildDefinitions.MSP430_3.3.compilerID.GCC.1906203576" superClass="com.ti.ccstudio.buildDefinitions.MSP430_3.3.compilerID.GCC" value="true" valueType="boolean"/>
 </tool>
 <tool id="com.ti.ccstudio.buildDefinitions.MSP430_3.3.exe.linkerDebug.504214481" name="MSP430 Linker" superClass="com.ti.ccstudio.buildDefinitions.MSP430_3.3.exe.linkerDebug">
 <option id="com.ti.ccstudio.buildDefinitions.MSP430_3.3.linkerID.HEAP_SIZE.1134561604" superClass="com.ti.ccstudio.buildDefinitions.MSP430_3.3.linkerID.HEAP_SIZE" value="80" valueType="string"/>
@@ -43,7 +45,7 @@
 <listOptionValue builtIn="false" value="&quot;${CG_TOOL_ROOT}/include&quot;"/>
 </option>
 </tool>
-<macros/>
+<macros expandEnvironmentMacros="true"/>
 </toolChain>
 </configuration>
 <configuration artifactExtension="out" artifactName="controller" description="" id="com.ti.ccstudio.buildDefinitions.MSP430.Release.918728536" name="Release" parent="com.ti.ccstudio.buildDefinitions.MSP430.Release">
@@ -88,5 +90,6 @@
 </tool>
 </toolChain>
 </configuration>
+<macros/>
 </project>
 </ManagedProjectBuildInfo>
