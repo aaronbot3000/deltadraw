@@ -3,7 +3,7 @@
 #include "i2c.h"
 #include "wheel.h"
 
-char I2C_data;
+volatile char I2C_data;
 
 void setup() {
 	// Stop watchdog
@@ -28,6 +28,8 @@ void setup() {
 	BCSCTL1 = CALBC1_8MHZ;                
   	DCOCTL = CALDCO_8MHZ;
   	BCSCTL2 |= DIVS_3;
+  	
+  	TACCTL0 &= ~CCIE;
 }
 
 void main(void) {
@@ -38,6 +40,6 @@ void main(void) {
 	while(1) {
 		// CPU off, await USI interrupt
 		// LPM0;
-		I2C_data = CapTouchActiveMode();
+		set_i2c_data(CapTouchActiveMode());
 	}
 }

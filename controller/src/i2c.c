@@ -3,7 +3,7 @@
 static const char SLV_Addr = 0x90;
 
 static volatile int I2C_State = 0;
-extern volatile char I2C_Data;
+volatile char I2C_Data = 0;
 
 void i2c_setup() {
 	USICTL0 = USIPE6+USIPE7+USISWRST;    // Port & USI mode setup
@@ -13,6 +13,11 @@ void i2c_setup() {
 	USICTL0 &= ~USISWRST;                // Enable USI
 	USICTL1 &= ~USIIFG;                  // Clear pending flag
 	_EINT();
+}
+
+void set_i2c_data(char in) {
+	I2C_Data = in;
+	return;
 }
 
 //******************************************************
