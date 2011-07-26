@@ -7,19 +7,23 @@
 #include "i2c.h"
 #include "patterns.h"
 
-#define moves_height (MAX(draw_height - 0.5, MIN_HEIGHT - 0.5))
+#define moves_z (MAX(draw_z - 0.5, MIN_Z - 0.5))
+
+#define UPDATE_INTERVAL 1000
+#define PERIP_X 0x90
 
 Serial pc(USBTX, USBRX); // tx, rx
+Ticker runner;
 
 // trololololol
 DigitalIn go_troll_up(p20);
 DigitalIn go_troll_dn(p19);
-DigitalIn go_adj_height(p18);
+DigitalIn go_adj_z(p18);
 
 DigitalIn go_run_pat(p17);
 
 static Planner planner;
-static F32 draw_height = MIN_HEIGHT; // inches
+static F32 draw_z = MIN_Z; // inches
 
 void setup() {
     servos_setup();
@@ -27,16 +31,16 @@ void setup() {
     pc.printf("Setup: %d\n", ret);
 }
 
-void adj_height() {
-    goto_point(&planner, 0, 0, draw_height);
+void adj_z() {
+    goto_point(&planner, 0, 0, draw_z);
     
     if (go_troll_up) {
         troll_up(&planner);
-        draw_height = planner.current_pos.z;
+        draw_z = planner.current_pos.z;
     }
     if (go_troll_dn) {
         troll_down(&planner);
-        draw_height = planner.current_pos.z;
+        draw_z = planner.current_pos.z;
     }
 }
 
@@ -48,25 +52,34 @@ void run_pattern() {
     }
 }
 
+void read_dials() {
+    S08 a = i2c_read(PERIP_X);
+    if (a != I2C_NO_MOTION) {
+        //pc.printf("input: %.5f\n", (F32)a);
+        nudge_x(&planner, ((F32)a)/100.0);
+    }
+}
+
 int main() {
     setup();
-    
-    // main while loop
+
+    // adjust z
     while (1) {
-        if (go_adj_height) {
-            adj_height();
+        if (go_adj_z) {
+            adj_z();
         }
         else if (go_run_pat) {
-            //clear_buffer(&planner);
-            //draw_square_nn(moves_height, draw_height, &planner);
-            draw_star(moves_height, draw_height, &planner);
-
-            run_pattern();
+            break;
         }
         else {
             //pc.printf("Restting\n");
             int ret = reset_position(&planner);
             //pc.printf("resetting: %d\n", ret);
         }
+    }
+    
+    runner.attach_us(read_dials, UPDATE_INTERVAL);
+    while(1) {
+        run_pattern();
     }
 }

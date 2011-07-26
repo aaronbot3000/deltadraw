@@ -11,7 +11,6 @@
 
 #define ACCL_ZONE .75 // inches
 
-
 #define INC_ONE(a) (((a) + 1) % PLANNER_BUFFER_SIZE)
 
 enum Planner_State {
@@ -52,5 +51,7 @@ Status planner_process(Planner* planner);
 
 Status troll_up(Planner* planner);
 Status troll_down(Planner* planner);
+
+Status nudge_x(Planner* planner, F32 amount);
 
 #endif

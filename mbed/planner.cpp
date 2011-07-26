@@ -4,6 +4,12 @@ inline F32 dist_between(Point a, Point b) {
     return sqrt((a.x - b.x) * (a.x - b.x) + (a.y - b.y) * (a.y - b.y) + (a.z - b.z) * (a.z - b.z));
 }
 
+inline void conform_goal(Point* in) {
+    in->x = RESTRICT(in->x, MIN_X, MAX_X);
+    in->y = RESTRICT(in->y, MIN_Y, MAX_Y);
+    in->z = RESTRICT(in->z, MIN_Z, MAX_Z);
+}
+
 Status planner_setup(Planner* planner) {
     // Initialize circular buffer
     planner->current = 0;
@@ -11,7 +17,7 @@ Status planner_setup(Planner* planner) {
     
     planner->current_pos.x = 0;
     planner->current_pos.y = 0;
-    planner->current_pos.z = START_HEIGHT;
+    planner->current_pos.z = START_Z;
     
     planner->prev_dist = 0;
     
@@ -22,7 +28,7 @@ Status reset_position(Planner* planner) {
     Point goal;
     goal.x = 0;
     goal.y = 0;
-    goal.z = START_HEIGHT;
+    goal.z = START_Z;
     return goto_point(planner, goal);
 }
 
@@ -54,6 +60,8 @@ Status goto_point(Planner* planner, Point goal) {
     F32 dist, full_dist, prev_dist;
     
     Planner_State state = PLR_ACCL;
+    
+    conform_goal(&goal);
 
     dx = goal.x - cur.x;
     dy = goal.y - cur.y;
@@ -140,7 +148,7 @@ Status planner_process(Planner* planner) {
 }
 
 Status troll_up(Planner* planner) {
-    if (planner->current_pos.z - 0.0001 > MIN_HEIGHT) {
+    if (planner->current_pos.z - 0.0001 > MIN_Z) {
         planner->current_pos.z -= MIN_STEP_SIZE;
         return set_position(planner->current_pos);
     }
@@ -148,9 +156,17 @@ Status troll_up(Planner* planner) {
 }
 
 Status troll_down(Planner* planner) {
-    if (planner->current_pos.z + MIN_STEP_SIZE < MAX_HEIGHT) {
+    if (planner->current_pos.z + MIN_STEP_SIZE < MAX_Z) {
         planner->current_pos.z += MIN_STEP_SIZE;
         return set_position(planner->current_pos);
     }
     return FAILURE;
+}
+
+Status nudge_x(Planner* planner, F32 amount) {
+    Point goal = planner->current_pos;
+    goal.x += amount;
+    conform_goal(&goal);
+    //pc.printf("X at: %.5f delta: %.5f\n", goal.x, amount);
+    return goto_point(planner, goal);
 }
