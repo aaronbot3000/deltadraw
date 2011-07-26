@@ -14,11 +14,20 @@
 #define SERVO_XOFF -2.2085
 #define SERVO_ZOFF  0.51
 
-#define MIN_HEIGHT 10.15
-#define START_HEIGHT (MIN_HEIGHT - 0.5)
-#define MAX_HEIGHT 15
+#define MAX_Z 11.5
+#define MIN_Z 10.15
+
+#define MAX_X  4
+#define MIN_X -4
+
+#define MAX_Y  4
+#define MIN_Y -4
+
+#define START_Z (MIN_Z - 0.5)
 
 #define MAX(a, b) ((a) > (b) ? (a) : (b))
+#define MIN(a, b) ((a) < (b) ? (a) : (b))
+#define RESTRICT(a, b1, b2) (MIN(b2, MAX(a, b1)))
 #define MAP(a, b1, b2, x1, x2) (((F32)((a) - (b1)) / (F32)((b2) - (b1))) * ((x2) - (x1)) + (x1)) 
 
 #define DEBUG
