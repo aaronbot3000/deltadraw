@@ -4,7 +4,7 @@ inline F32 dist_between(Point a, Point b) {
     return sqrt((a.x - b.x) * (a.x - b.x) + (a.y - b.y) * (a.y - b.y) + (a.z - b.z) * (a.z - b.z));
 }
 
-void planner_setup(Planner* planner) {
+Status planner_setup(Planner* planner) {
     // Initialize circular buffer
     planner->current = 0;
     planner->next = 0;
@@ -15,7 +15,7 @@ void planner_setup(Planner* planner) {
     
     planner->prev_dist = 0;
     
-    set_position(planner->current_pos);
+    return set_position(planner->current_pos);
 }
 
 Status reset_position(Planner* planner) {
@@ -78,7 +78,7 @@ Status goto_point(Planner* planner, Point goal) {
             if (full_dist - prev_dist > ACCL_ZONE)
                 state = PLR_FULL;
     
-            else if (prev_dist < ACCL_ZONE)
+            else if (prev_dist < ACCL_ZONE && prev_dist * 2 < full_dist)
                 state = PLR_DECL;
     
             else

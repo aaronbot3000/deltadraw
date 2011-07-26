@@ -2,9 +2,9 @@
 #define COMMON_H
 
 #include "mbed.h"
-
-#define ARM_UPPER_LEN 5
-#define ARM_LOWER_LEN 10.5
+ 
+#define ARM_UPPER_LEN 2.489
+#define ARM_LOWER_LEN 10.546875
 
 #define HAND_XOFF  1.09725
 #define HAND_ZOFF -0.20975
@@ -14,9 +14,9 @@
 #define SERVO_XOFF -2.2085
 #define SERVO_ZOFF  0.51
 
-#define START_HEIGHT 7 // inches
-#define MIN_HEIGHT 7.5
-#define MAX_HEIGHT 12
+#define MIN_HEIGHT 10.15
+#define START_HEIGHT (MIN_HEIGHT - 0.5)
+#define MAX_HEIGHT 15
 
 #define MAX(a, b) ((a) > (b) ? (a) : (b))
 #define MAP(a, b1, b2, x1, x2) (((F32)((a) - (b1)) / (F32)((b2) - (b1))) * ((x2) - (x1)) + (x1)) 

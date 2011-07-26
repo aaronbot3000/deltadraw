@@ -6,7 +6,7 @@
 
 #define PLANNER_BUFFER_SIZE 16
 
-#define MAX_STEP_SIZE   0.0040
+#define MAX_STEP_SIZE   0.0025
 #define MIN_STEP_SIZE   0.0001
 
 #define ACCL_ZONE .75 // inches
@@ -41,7 +41,7 @@ struct Planner {
 extern Serial pc;
 #endif
 
-void planner_setup(Planner* planner);
+Status planner_setup(Planner* planner);
 Status reset_position(Planner* planner);
 
 Status add_point_to_buffer(Planner* planner, Point in);

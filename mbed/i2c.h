@@ -8,8 +8,6 @@
 
 #define WHEEL1_ADDR 0x90
 
-
-
 S32 i2c_read(S32 address);
 
 #endif

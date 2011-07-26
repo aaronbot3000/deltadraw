@@ -51,8 +51,10 @@ Status set_position(Point target) {
 
         // Bounds checking
         if (dist > (ARM_UPPER_LEN + lower_radius) || 
-            dist < (lower_radius - ARM_UPPER_LEN))
+            dist < (lower_radius - ARM_UPPER_LEN)) {
+            pc.printf("OH FFFFFFUUUUUUUU %.5f, %.5f, %.5f\n", dist, ARM_UPPER_LEN, lower_radius);
             return FAILURE;
+        }
 
         alpha = (r2(ARM_UPPER_LEN) - r2(lower_radius) + r2(dist)) * 0.5 * inv_dist;
         
