@@ -45,7 +45,7 @@
 #define MASK1                   (BIT3+BIT4+BIT6+BIT7)
 #define MASK0                   (BIT3+BIT5+BIT6+BIT7)
 
-
+#define ABS(a) ((a) < 0 ? -(a) : (a))
 
 void wheel_setup();
 char CapTouchActiveMode();

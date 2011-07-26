@@ -3,7 +3,8 @@
 static const char SLV_Addr = 0x90;
 
 static volatile int I2C_State = 0;
-volatile char I2C_Data = 0;
+volatile char last_data = 0;
+volatile char current_data = 0;
 
 void i2c_setup() {
 	USICTL0 = USIPE6+USIPE7+USISWRST;    // Port & USI mode setup
@@ -16,7 +17,7 @@ void i2c_setup() {
 }
 
 void set_i2c_data(char in) {
-	I2C_Data = in;
+	current_data = in;
 	return;
 }
 
@@ -62,7 +63,18 @@ __interrupt void USI_TXRX (void) {
 
 		case 8: // Send Data byte
 			USICTL0 |= USIOE;        // SDA = output
-			USISRL = I2C_Data;       // Send data byte
+			if (current_data == INVALID_POS || last_data == INVALID_POS) {
+				USISRL = INVALID_POS;
+			}
+			else {
+				if (current_data - last_data < -16)
+					USISRL = current_data - last_data + 0x20;
+				else if (current_data - last_data > 16)
+					USISRL = current_data - last_data - 0x20;
+				else
+					USISRL = current_data - last_data;
+			}
+			last_data = current_data;
 			USICNT |=  0x08;         // Bit counter = 8, TX data
 			I2C_State = 10;          // Go to next state: receive (N)Ack
 			break;

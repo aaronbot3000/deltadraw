@@ -99,10 +99,11 @@ unsigned char GetGesture(unsigned char wheel_position) {
  * -------------------------------------------------------------------------------*/
 char CapTouchActiveMode() {
 	unsigned char gesture, gestureDetected; 
-	char ret_val = 0xFE;
+	char ret_val = 0x7F;
+	signed char delta;
 
 	gesture = INVALID_GESTURE;            // Wipes out gesture history
-	
+
 	gestureDetected = 0;
 
 	wheel_position = ILLEGAL_SLIDER_WHEEL_POSITION;       
@@ -113,8 +114,10 @@ char CapTouchActiveMode() {
 
 	if(wheel_position != ILLEGAL_SLIDER_WHEEL_POSITION) {
 		// Indicate a touch recognized
-		P1OUT |= BIT0;
+		P1OUT &= ~(MASK0 | MASK1);
+		P1OUT |= MASK6 | MASK7;
 
+		/*
 		// Adjust wheel position based: rotate CCW by 2 positions
 		if (wheel_position < 0x08) {
 			wheel_position += 0x40 - 0x08;
@@ -123,21 +126,35 @@ char CapTouchActiveMode() {
 			wheel_position -= 0x08;
 			// Adjust wheel position based: rotate CCW by 2 positions
 		}
+		*/
 
+		ret_val = wheel_position >> 1;
+
+		delta = last_wheel_position - wheel_position;
+		if (delta < -16)
+			delta += 0x20;
+		else if (delta > 16)
+			delta -= 0x20;
+		if (ABS(delta) > 1) {
+			last_wheel_position = wheel_position;
+			ret_val = wheel_position;
+		}
+		else
+			ret_val = last_wheel_position;
+
+		/*
 		wheel_position = wheel_position >>2;  // divide by four
-		
 
 		gesture = GetGesture(wheel_position);            
 
-		/* Add hysteresis to reduce toggling between wheel positions if no gesture 
-		 * has been TRULY detected. */  
+		// Add hysteresis to reduce toggling between wheel positions if no gesture 
+		// has been TRULY detected.
 
 		if ( (gestureDetected==0) && ((gesture<=1) || (gesture==0x11) || (gesture==0x10))) {
 			if (last_wheel_position != ILLEGAL_SLIDER_WHEEL_POSITION)
 				wheel_position = last_wheel_position;
 			gesture = 0;
 		}
-		ret_val = wheel_position;
 		// Turn on corresponding LED(s)
 
 		if ((gesture != 0) && (gesture != 16) && (gesture != INVALID_GESTURE)) {
@@ -148,14 +165,12 @@ char CapTouchActiveMode() {
 			} 
 			//ret_val = wheel_position;
 		}      
-
-		last_wheel_position = wheel_position;
+		*/
 	} 
+	// no wheel position was detected 
 	else {
-		// no wheel position was detected 
-
-		P1OUT &= ~BIT0;       
-
+		P1OUT &= ~(MASK6 | MASK7);
+		P1OUT |= MASK0 | MASK1;
 		// Reset all touch conditions, turn off LEDs, 
 		last_wheel_position= ILLEGAL_SLIDER_WHEEL_POSITION;      
 		gesture = INVALID_GESTURE;
