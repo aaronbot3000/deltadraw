@@ -26,6 +26,13 @@ Status set_position(Point target) {
     Point target_rot, trans;
     F32 result[3];
     
+    // Bounds checking
+    // Shaddup bout the Z offset
+    if (target.x < MIN_X || target.x > MAX_X ||
+        target.y < MIN_Y || target.y > MAX_Y ||
+        target.z < MIN_Z - 0.75 || target.z > MAX_Z)
+        return FAILURE;
+    
     target_rot.x = target.x;
     target_rot.y = target.y;
     target_rot.z = target.z;
