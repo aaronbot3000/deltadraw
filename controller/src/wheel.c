@@ -1,181 +1,91 @@
 #include "wheel.h"
 
-static unsigned int wheel_position=ILLEGAL_SLIDER_WHEEL_POSITION, last_wheel_position=ILLEGAL_SLIDER_WHEEL_POSITION;
-//static unsigned int deltaCnts[1];
-//static unsigned int prox_raw_Cnts;
+static short pos_filt, last_pos_filt, last_pos, need_init;
+static int no_wrap;
 
 void wheel_setup() {
 	P1OUT = BIT0;
 
 	TI_CAPT_Init_Baseline(&wheel);
 	TI_CAPT_Update_Baseline(&wheel,2);
+	need_init = 1;
 }
 
-/* ----------------GetGesture----------------------------------------------
- * Determine immediate gesture based on current & previous wheel position
- * ------------------------------------------------------------------------*/
-unsigned char GetGesture(unsigned char wheel_position) {
-	unsigned char gesture = INVALID_GESTURE, direction, ccw_check, cw_check; 
-	// ******************************************************************************
-	// gesturing
-	// determine if a direction/swipe is occuring
-	// the difference between the initial position and
-	// the current wheel position should not exceed 8
-	// 0-1-2-3-4-5-6-7-8-9-A-B-C-D-E-F-0...
-	//
-	// E-F-0-1-2:  cw, 4
-	// 2-1-0-F-E: ccw, 4
-	// A-B-C-D-E-F
+// Read the wheel position, filter it, and add hyteresis before returning
+// for super smooth etch-a-sketch operation
+char get_wheel_reading() {
+	short ret_val = 0x7F;
+	short diff, reading, i;
 
-	//if(initial_wheel_position == INVALID_WHEEL_POSITION)
-	//{
-	//gesture = 0;
-	//initial_wheel_position = wheel_position;
-	//}
-	//else
+	reading = TI_CAPT_Wheel(&wheel);
 
-	if(last_wheel_position != ILLEGAL_SLIDER_WHEEL_POSITION) {
-		if(last_wheel_position  > wheel_position) {
-			// E-D-C-B-A:  ccw, 4
-			// counter clockwise: 0 < (init_wheel_position - wheel_position) < 8
-			//                    gesture = init_wheel_position - wheel_position
-			//
-			// E-F-0-1-2:  cw, 4
-			// clockwise:        0 < (init_wheel_position+wheel_position)-16 <8
-			//                    
-			ccw_check = last_wheel_position  - wheel_position;
-			if(ccw_check < 8) {
-				gesture = ccw_check;
-				direction = COUNTER_CLOCKWISE;
+
+	if (reading != ILLEGAL_SLIDER_WHEEL_POSITION) {
+		if (need_init) {
+			no_wrap = reading >> 2;
+			for (i = 0; i < 3; i++) {
+				no_wrap += TI_CAPT_Wheel(&wheel) >> 2;
 			}
-			else {
-				// E-F-0-1-2:  cw, 4
-				// 16 - 14 + 2 = 4
-				cw_check = 16 - last_wheel_position  + wheel_position ;
-				if(cw_check < 8)
-				{
-					gesture = cw_check;
-					direction = CLOCKWISE;
-				}
-			}
+			last_pos = no_wrap;
+			pos_filt = no_wrap;
+			last_pos_filt = ILLEGAL_SLIDER_WHEEL_POSITION;
+			need_init = 0;
 		}
 		else {
-			// initial_wheel_position <= wheel_position
-			//
-			// 2-1-0-F-E: ccw, 4
-			// counter clockwise: 
-			//                    0 < (init_wheel_position+wheel_position)-16 <8
-			//                    gesture = init_wheel_position - wheel_position
-			//
-			// 0-1-2-3-4:  cw, 4
-			// clockwise:        0 < (wheel_position - init_wheel_position) < 8
-			//    
-			cw_check = wheel_position - last_wheel_position ;
-			if(cw_check < 8) {
-				gesture = cw_check;
-				direction = CLOCKWISE;
-			}
-			else {
-				// 2-1-0-F-E: ccw, 4
-				// 16 + 2 - 14 = 4
-				ccw_check = 16 + last_wheel_position  - wheel_position;
-				if(ccw_check < 8) {
-					gesture = ccw_check;
-					direction = COUNTER_CLOCKWISE;
-				}
-			}
-		}
-	} 
-	if (gesture == INVALID_GESTURE)
-		return gesture;
-	if (direction == COUNTER_CLOCKWISE)
-		return (gesture + 16);
-	else
-		return gesture;
-}
-
-/* ----------------CapTouchActiveMode----------------------------------------------
- * Determine immediate gesture based on current & previous wheel position
- * -------------------------------------------------------------------------------*/
-char CapTouchActiveMode() {
-	unsigned char gesture, gestureDetected; 
-	char ret_val = 0x7F;
-	signed char delta;
-
-	gesture = INVALID_GESTURE;            // Wipes out gesture history
-
-	gestureDetected = 0;
-
-	wheel_position = ILLEGAL_SLIDER_WHEEL_POSITION;       
-	wheel_position = TI_CAPT_Wheel(&wheel);
-
-	// Process wheel touch/position/gesture  if a wheel touch is registered
-	// Wheel processing has higher priority than center button
-
-	if(wheel_position != ILLEGAL_SLIDER_WHEEL_POSITION) {
+			diff = reading - last_pos;
+			if (diff > 32)
+				diff -= 64;
+			else if (diff < -32)
+				diff += 64;
+			
+			no_wrap += diff;
+			last_pos = reading;
+			
+			pos_filt = (3 * pos_filt) >> 2;
+			pos_filt += no_wrap >> 2;
+		}	
+		
 		// Indicate a touch recognized
-		P1OUT &= ~(MASK0 | MASK1);
 		P1OUT |= MASK6 | MASK7;
 
-		/*
-		// Adjust wheel position based: rotate CCW by 2 positions
-		if (wheel_position < 0x08) {
-			wheel_position += 0x40 - 0x08;
+		if (last_pos_filt == ILLEGAL_SLIDER_WHEEL_POSITION) {
+			ret_val = pos_filt + 2;
+			ret_val &= 0xFFFC;
+			if (ret_val > 31)
+				ret_val -= 32;
 		}
 		else {
-			wheel_position -= 0x08;
-			// Adjust wheel position based: rotate CCW by 2 positions
+			diff = pos_filt - last_pos_filt;
+			// Handle wrap-around
+			if (diff > 16) {
+				diff -= 32;
+			}
+			else if (diff < -16) {
+				diff += 32;
+			}
+			if (diff > HYSTERESIS) {
+				ret_val = pos_filt;
+				ret_val &= 0xFFFC;
+				if (ret_val > 31)
+					ret_val -= 32;
+			}
+			else if (diff < -HYSTERESIS) {
+				ret_val = pos_filt + 3;
+				ret_val &= 0xFFFC;
+				if (ret_val < 0)
+					ret_val += 32;
+			}
+			else
+				ret_val = 0;
 		}
-		*/
-
-		ret_val = wheel_position >> 1;
-
-		delta = last_wheel_position - wheel_position;
-		if (delta < -16)
-			delta += 0x20;
-		else if (delta > 16)
-			delta -= 0x20;
-		if (ABS(delta) > 1) {
-			last_wheel_position = wheel_position;
-			ret_val = wheel_position;
-		}
-		else
-			ret_val = last_wheel_position;
-
-		/*
-		wheel_position = wheel_position >>2;  // divide by four
-
-		gesture = GetGesture(wheel_position);            
-
-		// Add hysteresis to reduce toggling between wheel positions if no gesture 
-		// has been TRULY detected.
-
-		if ( (gestureDetected==0) && ((gesture<=1) || (gesture==0x11) || (gesture==0x10))) {
-			if (last_wheel_position != ILLEGAL_SLIDER_WHEEL_POSITION)
-				wheel_position = last_wheel_position;
-			gesture = 0;
-		}
-		// Turn on corresponding LED(s)
-
-		if ((gesture != 0) && (gesture != 16) && (gesture != INVALID_GESTURE)) {
-			// A gesture has been detected 
-			if (gestureDetected ==0) {
-				// Starting of a new gesture sequence
-				gestureDetected = 1;
-			} 
-			//ret_val = wheel_position;
-		}      
-		*/
+		//ret_val >>= 1;
+		ret_val = pos_filt;
 	} 
 	// no wheel position was detected 
 	else {
 		P1OUT &= ~(MASK6 | MASK7);
-		P1OUT |= MASK0 | MASK1;
-		// Reset all touch conditions, turn off LEDs, 
-		last_wheel_position= ILLEGAL_SLIDER_WHEEL_POSITION;      
-		gesture = INVALID_GESTURE;
-		gestureDetected = 0;
-
+		
+		need_init = 1;
 	} 
 	return ret_val;
 }
