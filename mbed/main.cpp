@@ -53,14 +53,17 @@ void run_pattern() {
 }
 
 void read_dials() {
-    S08 a = i2c_read(PERIP_X);
-    if (a != I2C_NO_MOTION) {
-        //pc.printf("input: %.5f\n", (F32)a);
-        nudge_x(&planner, ((F32)a)/100.0);
+    F32 adj;
+    U08 a = i2c_read(PERIP_X);
+    if (a != 128 && a != I2C_ERROR) {
+        adj = ((F32)a - 128)/100.0;
+        //pc.printf("input: %0.5f\n", adj);
+        nudge_x(&planner, adj);
     }
 }
 
 int main() {
+    S08 at_draw = 0, debounce = 0;
     setup();
 
     // adjust z
@@ -78,8 +81,24 @@ int main() {
         }
     }
     
-    runner.attach_us(read_dials, UPDATE_INTERVAL);
+    
     while(1) {
-        run_pattern();
+        if (go_adj_z && debounce < 20) {
+            debounce++;
+            if (debounce == 20) {
+                if (at_draw) {
+                    goto_point(&planner, planner.current_pos.x, planner.current_pos.y, moves_z);
+                    at_draw = 0;
+                }
+                else {
+                    goto_point(&planner, planner.current_pos.x, planner.current_pos.y, draw_z);
+                    at_draw = 1;
+                }
+                i2c_read(PERIP_X);
+            }
+        }
+        if (!go_adj_z && debounce > 0)
+            debounce--;
+        read_dials();
     }
 }
