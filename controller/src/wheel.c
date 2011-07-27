@@ -13,8 +13,9 @@ void wheel_setup() {
 
 // Read the wheel position, filter it, and add hyteresis before returning
 // for super smooth etch-a-sketch operation
+// Returns a delta position, not absolute position
 char get_wheel_reading() {
-	short ret_val = 0x7F;
+	short ret_val = 0;
 	short diff, reading, i;
 
 	reading = TI_CAPT_Wheel(&wheel);
@@ -41,45 +42,30 @@ char get_wheel_reading() {
 			no_wrap += diff;
 			last_pos = reading;
 			
-			pos_filt = (3 * pos_filt) >> 2;
-			pos_filt += no_wrap >> 2;
-		}	
+			last_pos_filt = pos_filt;
+			pos_filt = (7 * pos_filt) >> 3;
+			pos_filt += no_wrap >> 3;
+			
+			if (pos_filt >= 255) {
+				pos_filt -= 127;
+				last_pos_filt -= 127;
+				no_wrap -= 127;
+			}
+			if (pos_filt <= 0) {
+				pos_filt += 128;
+				last_pos_filt += 128;
+				no_wrap += 128;
+			}
+		}
 		
 		// Indicate a touch recognized
 		P1OUT |= MASK6 | MASK7;
 
-		if (last_pos_filt == ILLEGAL_SLIDER_WHEEL_POSITION) {
-			ret_val = pos_filt + 2;
-			ret_val &= 0xFFFC;
-			if (ret_val > 31)
-				ret_val -= 32;
+		if (last_pos_filt != ILLEGAL_SLIDER_WHEEL_POSITION) {
+			ret_val = pos_filt - last_pos_filt;
 		}
-		else {
-			diff = pos_filt - last_pos_filt;
-			// Handle wrap-around
-			if (diff > 16) {
-				diff -= 32;
-			}
-			else if (diff < -16) {
-				diff += 32;
-			}
-			if (diff > HYSTERESIS) {
-				ret_val = pos_filt;
-				ret_val &= 0xFFFC;
-				if (ret_val > 31)
-					ret_val -= 32;
-			}
-			else if (diff < -HYSTERESIS) {
-				ret_val = pos_filt + 3;
-				ret_val &= 0xFFFC;
-				if (ret_val < 0)
-					ret_val += 32;
-			}
-			else
-				ret_val = 0;
-		}
-		//ret_val >>= 1;
-		ret_val = pos_filt;
+		else
+			ret_val = 0;
 	} 
 	// no wheel position was detected 
 	else {

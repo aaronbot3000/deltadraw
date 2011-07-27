@@ -40,6 +40,6 @@ void main(void) {
 	while(1) {
 		// CPU off, await USI interrupt
 		// LPM0;
-		set_i2c_data(CapTouchActiveMode());
+		set_i2c_data(get_wheel_reading());
 	}
 }
