@@ -9,8 +9,9 @@
 
 #define moves_z (MAX(draw_z - 0.5, MIN_Z - 0.5))
 
-#define UPDATE_INTERVAL 1000
+#define UPDATE_INTERVAL 10000
 #define PERIP_X 0x90
+#define PERIP_Y 0x80
 
 Serial pc(USBTX, USBRX); // tx, rx
 Ticker runner;
@@ -52,18 +53,51 @@ void run_pattern() {
     }
 }
 
+static S08 at_draw = 0, debounce = 0;
 void read_dials() {
-    F32 adj;
-    U08 a = i2c_read(PERIP_X);
-    if (a != 128 && a != I2C_ERROR) {
-        adj = ((F32)a - 128)/100.0;
-        //pc.printf("input: %0.5f\n", adj);
-        nudge_x(&planner, adj);
+    F32 adj_x = 0, adj_y = 0;
+    Point next;
+    U08 in_x, in_y, zch = 0;
+        
+    next = planner.next_pos;
+        
+    // Debounce the switches
+    if (go_adj_z && debounce < 20) {
+        debounce++;
+        if (debounce == 20) {
+            if (at_draw) {
+                next.z = moves_z;
+                at_draw = 0;
+            }
+            else {
+                next.z = draw_z;
+                at_draw = 1;
+            }
+            zch = 1;
+        }
+    }
+    if (!go_adj_z && debounce > 0)
+        debounce--;
+    
+    in_x = i2c_read(PERIP_X);
+    in_y = i2c_read(PERIP_Y);
+    if (in_x != 128 && in_x != I2C_ERROR) {
+        adj_x = ((F32)RESTRICT(in_x - 128, -16, 16))/64.0;
+        //pc.printf("input: %0.5f\n", adj_x);
+        next.x += adj_x;
+    }
+    if (in_y != 128 && in_y != I2C_ERROR) {
+        adj_y = ((F32)RESTRICT(in_y - 128, -16, 16))/64.0;
+        //pc.printf("input: %0.5f\n", adj_y);
+        next.y += adj_y;
+    }
+    if ((adj_x != 0 ||adj_y != 0 || zch) && get_num_in_buffer(&planner) < 1) {
+        //pc.printf("added to buffer");
+        add_point_to_buffer(&planner, next);
     }
 }
 
 int main() {
-    S08 at_draw = 0, debounce = 0;
     setup();
 
     // adjust z
@@ -81,24 +115,13 @@ int main() {
         }
     }
     
+    // Clear the peripheral buffers
+    i2c_read(PERIP_X);
+    i2c_read(PERIP_Y);
     
+    runner.attach_us(read_dials, UPDATE_INTERVAL);
     while(1) {
-        if (go_adj_z && debounce < 20) {
-            debounce++;
-            if (debounce == 20) {
-                if (at_draw) {
-                    goto_point(&planner, planner.current_pos.x, planner.current_pos.y, moves_z);
-                    at_draw = 0;
-                }
-                else {
-                    goto_point(&planner, planner.current_pos.x, planner.current_pos.y, draw_z);
-                    at_draw = 1;
-                }
-                i2c_read(PERIP_X);
-            }
-        }
-        if (!go_adj_z && debounce > 0)
-            debounce--;
-        read_dials();
+        run_pattern();
+        
     }
 }
