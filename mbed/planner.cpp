@@ -19,6 +19,8 @@ Status planner_setup(Planner* planner) {
     planner->current_pos.y = 0;
     planner->current_pos.z = START_Z;
     
+    planner->next_pos = planner->current_pos;
+    
     planner->prev_dist = 0;
     
     return set_position(planner->current_pos);
@@ -45,6 +47,13 @@ void clear_buffer(Planner* planner) {
     planner->next = planner->current;
 }
 
+int get_num_in_buffer(Planner* planner) {
+    if (planner->next < planner->current)
+        return planner->next + PLANNER_BUFFER_SIZE - planner->current - 1;
+    else
+        return planner->next - planner->current - 1;
+}
+
 Status goto_point(Planner* planner, F32 x, F32 y, F32 z) {
     Point goal;
     goal.x = x;
@@ -55,6 +64,7 @@ Status goto_point(Planner* planner, F32 x, F32 y, F32 z) {
 
 Status goto_point(Planner* planner, Point goal) {
     Point cur  = planner->current_pos;
+    
     F32 step = 0, inv_vec_mag;
     F32 dx, dy, dz;
     F32 dist, full_dist, prev_dist;
@@ -62,6 +72,7 @@ Status goto_point(Planner* planner, Point goal) {
     Planner_State state = PLR_ACCL;
     
     conform_goal(&goal);
+    planner->next_pos = goal;
 
     dx = goal.x - cur.x;
     dy = goal.y - cur.y;
