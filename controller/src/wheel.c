@@ -34,17 +34,17 @@ char get_wheel_reading() {
 		}
 		else {
 			diff = reading - last_pos;
-			if (diff > 32)
+			if (diff > 32 && reading > 48 && last_pos < 16)
 				diff -= 64;
-			else if (diff < -32)
+			else if (diff < -32 && reading < 48 && last_pos > 16)
 				diff += 64;
 			
 			no_wrap += diff;
 			last_pos = reading;
 			
 			last_pos_filt = pos_filt;
-			pos_filt = (7 * pos_filt) >> 3;
-			pos_filt += no_wrap >> 3;
+			pos_filt = (3 * pos_filt) >> 2;
+			pos_filt += no_wrap >> 2;
 			
 			if (pos_filt >= 255) {
 				pos_filt -= 127;
@@ -73,5 +73,10 @@ char get_wheel_reading() {
 		
 		need_init = 1;
 	} 
+	// saturate ret_val into a signed char, just in case
+	if (ret_val > 127)
+		ret_val = 127;
+	if (ret_val < -128)
+		ret_val = -128;
 	return ret_val;
 }
