@@ -1,5 +1,6 @@
 *.swp
 ~*
 controller/Debug/*
+controller/Release/*
 *~
 controller/.settings*
