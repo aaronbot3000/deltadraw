@@ -1,6 +1,6 @@
 #include "i2c.h"
 
-static const char SLV_Addr = 0x90;
+static const char SLV_Addr = 0x80;
 
 static volatile int I2C_State = 0;
 volatile unsigned char current_data = 0;
@@ -16,7 +16,7 @@ void i2c_setup() {
 }
 
 void set_i2c_data(char in) {
-	current_data += in;
+	current_data = in + 128;
 	return;
 }
 
