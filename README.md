@@ -1,4 +1,5 @@
-==Pythagoras, the Drawing Delta Robot==
+Pythagoras, the Drawing Delta Robot
+===================================
 
 By Aaron Fan
 
