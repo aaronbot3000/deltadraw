@@ -4,7 +4,7 @@
 #include "common.h"
 #include "positioner.h"
 
-#define PLANNER_BUFFER_SIZE 16
+#define PLANNER_BUFFER_SIZE 64
 
 #define MAX_STEP_SIZE   0.0025
 #define MIN_STEP_SIZE   0.0001

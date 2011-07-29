@@ -115,13 +115,20 @@ int main() {
         }
     }
     
-    // Clear the peripheral buffers
-    i2c_read(PERIP_X);
-    i2c_read(PERIP_Y);
+    wait_ms(1000);
     
-    runner.attach_us(read_dials, UPDATE_INTERVAL);
-    while(1) {
-        run_pattern();
+    while (1) {
+        // Clear the peripheral buffers
+        i2c_read(PERIP_X);
+        i2c_read(PERIP_Y);
         
+        runner.attach_us(read_dials, UPDATE_INTERVAL);
+        while(1) {
+            run_pattern();
+            if (go_run_pat)
+                break;
+        }
+        draw_ti(moves_z, draw_z, planner.current_pos, &planner);
+        run_pattern();
     }
 }
