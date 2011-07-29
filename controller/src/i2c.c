@@ -1,10 +1,9 @@
 #include "i2c.h"
 
-static const char SLV_Addr = 0x90;
+static const char SLV_Addr = 0x80;
 
 static volatile int I2C_State = 0;
-volatile char last_data = 0;
-volatile char current_data = 0;
+volatile unsigned char current_data = 0;
 
 void i2c_setup() {
 	USICTL0 = USIPE6+USIPE7+USISWRST;    // Port & USI mode setup
@@ -17,7 +16,7 @@ void i2c_setup() {
 }
 
 void set_i2c_data(char in) {
-	current_data = in;
+	current_data = in + 128;
 	return;
 }
 
@@ -27,8 +26,8 @@ void set_i2c_data(char in) {
 #pragma vector = USI_VECTOR
 __interrupt void USI_TXRX (void) {
 	if (USICTL1 & USISTTIFG) {             // Start entry?
-		P1OUT |= 0x01;                     // LED on: Sequence start
 		I2C_State = 2;                     // Enter 1st state on start
+		P1OUT &= ~0x01;
 	}
 
 	switch(I2C_State) {
@@ -45,7 +44,7 @@ __interrupt void USI_TXRX (void) {
 			USICTL0 |= USIOE;        // SDA = output
 			if (USISRL == (SLV_Addr | 0x1)) { // Address match?
 				USISRL = 0x00;         // Send Ack
-				P1OUT &= ~0x01;        // LED off
+				P1OUT |= 0x01;        // LED on
 				I2C_State = 8;         // Go to next state: TX data
 			}
 			else {
@@ -63,18 +62,8 @@ __interrupt void USI_TXRX (void) {
 
 		case 8: // Send Data byte
 			USICTL0 |= USIOE;        // SDA = output
-			if (current_data == INVALID_POS || last_data == INVALID_POS) {
-				USISRL = INVALID_POS;
-			}
-			else {
-				if (current_data - last_data < -16)
-					USISRL = current_data - last_data + 0x20;
-				else if (current_data - last_data > 16)
-					USISRL = current_data - last_data - 0x20;
-				else
-					USISRL = current_data - last_data;
-			}
-			last_data = current_data;
+			USISRL = current_data;
+			current_data = 128;
 			USICNT |=  0x08;         // Bit counter = 8, TX data
 			I2C_State = 10;          // Go to next state: receive (N)Ack
 			break;
@@ -95,6 +84,7 @@ __interrupt void USI_TXRX (void) {
 			// Prep for Start condition
 			USICTL0 &= ~USIOE;       // SDA = input
 			I2C_State = 0;           // Reset state machine
+			P1OUT &= ~0x01;        // LED off
 			break;
 	}
 

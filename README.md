@@ -1,3 +1,6 @@
-A drawing delta robot.
+Pythagoras, the Drawing Delta Robot
+===================================
 
-More to come later
+By Aaron Fan
+
+More to come later.

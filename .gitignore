@@ -4,3 +4,4 @@ controller/Debug/*
 controller/Release/*
 *~
 controller/.settings*
+controller/.launches*

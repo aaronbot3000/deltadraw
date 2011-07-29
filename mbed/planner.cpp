@@ -4,6 +4,12 @@ inline F32 dist_between(Point a, Point b) {
     return sqrt((a.x - b.x) * (a.x - b.x) + (a.y - b.y) * (a.y - b.y) + (a.z - b.z) * (a.z - b.z));
 }
 
+inline void conform_goal(Point* in) {
+    in->x = RESTRICT(in->x, MIN_X, MAX_X);
+    in->y = RESTRICT(in->y, MIN_Y, MAX_Y);
+    in->z = RESTRICT(in->z, MIN_Z, MAX_Z);
+}
+
 Status planner_setup(Planner* planner) {
     // Initialize circular buffer
     planner->current = 0;
@@ -11,7 +17,9 @@ Status planner_setup(Planner* planner) {
     
     planner->current_pos.x = 0;
     planner->current_pos.y = 0;
-    planner->current_pos.z = START_HEIGHT;
+    planner->current_pos.z = START_Z;
+    
+    planner->next_pos = planner->current_pos;
     
     planner->prev_dist = 0;
     
@@ -22,7 +30,7 @@ Status reset_position(Planner* planner) {
     Point goal;
     goal.x = 0;
     goal.y = 0;
-    goal.z = START_HEIGHT;
+    goal.z = START_Z;
     return goto_point(planner, goal);
 }
 
@@ -39,6 +47,13 @@ void clear_buffer(Planner* planner) {
     planner->next = planner->current;
 }
 
+int get_num_in_buffer(Planner* planner) {
+    if (planner->next < planner->current)
+        return planner->next + PLANNER_BUFFER_SIZE - planner->current - 1;
+    else
+        return planner->next - planner->current - 1;
+}
+
 Status goto_point(Planner* planner, F32 x, F32 y, F32 z) {
     Point goal;
     goal.x = x;
@@ -49,11 +64,15 @@ Status goto_point(Planner* planner, F32 x, F32 y, F32 z) {
 
 Status goto_point(Planner* planner, Point goal) {
     Point cur  = planner->current_pos;
+    
     F32 step = 0, inv_vec_mag;
     F32 dx, dy, dz;
     F32 dist, full_dist, prev_dist;
     
     Planner_State state = PLR_ACCL;
+    
+    conform_goal(&goal);
+    planner->next_pos = goal;
 
     dx = goal.x - cur.x;
     dy = goal.y - cur.y;
@@ -140,7 +159,7 @@ Status planner_process(Planner* planner) {
 }
 
 Status troll_up(Planner* planner) {
-    if (planner->current_pos.z - 0.0001 > MIN_HEIGHT) {
+    if (planner->current_pos.z - 0.0001 > MIN_Z) {
         planner->current_pos.z -= MIN_STEP_SIZE;
         return set_position(planner->current_pos);
     }
@@ -148,9 +167,17 @@ Status troll_up(Planner* planner) {
 }
 
 Status troll_down(Planner* planner) {
-    if (planner->current_pos.z + MIN_STEP_SIZE < MAX_HEIGHT) {
+    if (planner->current_pos.z + MIN_STEP_SIZE < MAX_Z) {
         planner->current_pos.z += MIN_STEP_SIZE;
         return set_position(planner->current_pos);
     }
     return FAILURE;
+}
+
+Status nudge_x(Planner* planner, F32 amount) {
+    Point goal = planner->current_pos;
+    goal.x += amount;
+    conform_goal(&goal);
+    //pc.printf("X at: %.5f delta: %.5f\n", goal.x, amount);
+    return goto_point(planner, goal);
 }

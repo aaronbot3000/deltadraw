@@ -4,9 +4,7 @@
 #include "mbed.h"
 #include "common.h"
 
-#define I2C_ERROR 0xffffffff
-
-#define WHEEL1_ADDR 0x90
+#define I2C_ERROR 0xFF
 
 S32 i2c_read(S32 address);
 
