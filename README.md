@@ -1,3 +1,3 @@
-A drawing delta robot.
+== Pythagoras, the Drawing Delta Robot ==
 
-More to come later
+More to come later.
