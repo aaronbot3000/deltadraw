@@ -5,11 +5,12 @@ import cv
 #INPUT = '4.1.05.tiff'
 #INPUT = 'test2.jpg'
 #INPUT = 'test4.png'
-INPUT = 'test4.jpg'
+#INPUT = 'test4.jpg'
+INPUT = 'test5.jpg'
 #INPUT = 'test3.png'
 #INPUT = 'lena.bmp'
 #INPUT = 'test_pattern.jpg'
-RES_X = 100
+RES_X = 160
 
 res_gray = None 
 res_smooth = None 
@@ -63,16 +64,16 @@ def main():
 
 def refresh_poly():
     global poly_acc, contours, a_storage
-    polys = cv.ApproxPoly(contours, a_storage, cv.CV_POLY_APPROX_DP, poly_acc, 99)
+    polys = cv.ApproxPoly(contours, a_storage, cv.CV_POLY_APPROX_DP, poly_acc, -1)
 
     con = polys
     index = 0
+    polyc = 0
     while not con == None:
         index += len(con)
-        #for x in range(len(con)):
-            #print con[x]
+        polyc += 1
         con = con.h_next()
-    print '%d polygons'%len(polys)
+    print '%d polygons'%polyc
     print '%d points'%index
 
     cv.SetZero(contour_out)
