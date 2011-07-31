@@ -77,8 +77,8 @@ class Vectorizer:
         print '\n%d polygons'%polyc
         print '%d points'%index
 
-        cv.SetZero(self.contour_out)
-        cv.DrawContours(self.contour_out, self.polys_out, cv.Scalar(255, 0, 0), cv.Scalar(0, 0, 255), 99)
+        cv.Set(self.contour_out, cv.ScalarAll(255))
+        cv.DrawContours(self.contour_out, self.polys_out, cv.Scalar(0, 0, 0), cv.Scalar(0, 0, 0), 99)
 
         cv.ShowImage('Contours', self.contour_out)
 
