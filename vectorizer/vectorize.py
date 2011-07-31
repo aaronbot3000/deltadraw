@@ -6,6 +6,7 @@ INPUT = 'lena.bmp'
 RES_X = 160
 
 class Vectorizer:
+    # Vectorization settings
     __canny_lo = 30
     __canny_hi = 70
     __canny_apeture = 0
@@ -30,13 +31,12 @@ class Vectorizer:
 
         self.__del_most_mem()
 
-        return self.polys_out
+        return self.polys_out, self.__newY
 
     def __load_image(self, image_name, newX):
         orig = cv.LoadImageM(INPUT)
-        newY = int(float(newX) / orig.cols * orig.rows)
-
-        self.__init_mem(newX, newY)
+        self.__newY = int(float(newX) / orig.cols * orig.rows)
+        self.__init_mem(newX, self.__newY)
 
         cv.Resize(orig, self.res)
         cv.CvtColor(self.res, self.__res_gray, cv.CV_RGB2GRAY)
@@ -64,6 +64,7 @@ class Vectorizer:
     def __refresh_poly(self):
         self.polys_out = cv.ApproxPoly(self.contours, self.a_storage, cv.CV_POLY_APPROX_DP, self.__poly_acc / 100.0, -1)
 
+        # Prints a count of the number of polygons and points in the picture thingy
         con = self.polys_out
         index = 0
         polyc = 0

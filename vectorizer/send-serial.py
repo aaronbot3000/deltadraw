@@ -21,7 +21,8 @@ def main():
     serial = Serial(SERIAL_PORT, BAUD)
     vect   = Vectorizer()
 
-    polys = vect.get_polygons(INPUT, RES_X)
+    polys, height = vect.get_polygons(INPUT, RES_X)
+    print height
     con = polys
     pointc = 0
     polyc = 0
