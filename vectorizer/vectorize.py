@@ -2,14 +2,7 @@
 
 import cv
 
-#INPUT = '4.1.05.tiff'
-#INPUT = 'test2.jpg'
-#INPUT = 'test4.png'
-#INPUT = 'test4.jpg'
-INPUT = 'test5.jpg'
-#INPUT = 'test3.png'
-#INPUT = 'lena.bmp'
-#INPUT = 'test_pattern.jpg'
+INPUT = 'lena.bmp'
 RES_X = 160
 
 class Vectorizer:
