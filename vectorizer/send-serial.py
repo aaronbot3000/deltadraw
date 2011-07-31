@@ -2,13 +2,13 @@
 
 from serial import Serial
 from vectorize import Vectorizer
-import struct
+import struct, sys
 
 #INPUT = '4.1.05.tiff'
-INPUT = 'test2.jpg'
+#INPUT = 'test2.jpg'
 #INPUT = 'test_text.png'
 #INPUT = 'test4.png'
-#INPUT = 'test4.jpg'
+INPUT = 'test4.jpg'
 #INPUT = 'test5.jpg'
 #INPUT = 'test3.png'
 #INPUT = 'lena.bmp'
@@ -38,12 +38,25 @@ def send_wait_ack(data):
     serial.read(1)
 
 def main():
-    global serial
+    global serial, MIN_Y, MAX_Y, MIN_X, MAX_X
+
+    if not len(sys.argv) == 3:
+        print 'Wrong args'
+        sys.exit(0)
+    
     serial = Serial(SERIAL_PORT, BAUD)
     vect   = Vectorizer()
+    RES_X = int(sys.argv[1])
 
-    polys, RES_Y = vect.get_polygons(INPUT, RES_X)
-    print RES_Y
+    polys, RES_Y = vect.get_polygons(sys.argv[2], RES_X)
+
+    if RES_X > RES_Y:
+        MIN_Y *= float(RES_Y) / RES_X
+        MAX_Y *= float(RES_Y) / RES_X
+    elif RES_X < RES_Y:
+        MIN_X *= float(RES_X) / RES_Y
+        MAX_X *= float(RES_X) / RES_Y
+
     con = polys
     pointc = 0
     polyc = 0
@@ -93,7 +106,7 @@ def main():
     # Send end of transmission
     send_wait_ack(END_DATA)
 
-    raw_input("press any key to continue")
+    raw_input("press enter to continue")
 
 
 if __name__ == '__main__':
