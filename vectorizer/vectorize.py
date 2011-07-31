@@ -68,14 +68,14 @@ class Vectorizer:
 
         # Prints a count of the number of polygons and points in the picture thingy
         con = self.polys_out
-        index = 0
-        polyc = 0
+        self.pointc = 0
+        self.polyc = 0
         while not con == None:
-            index += len(con)
-            polyc += 1
+            self.pointc += len(con)
+            self.polyc += 1
             con = con.h_next()
-        print '\n%d polygons'%polyc
-        print '%d points'%index
+        print '\n%d polygons'%self.polyc
+        print '%d points'%self.pointc
 
         cv.Set(self.contour_out, cv.ScalarAll(255))
         cv.DrawContours(self.contour_out, self.polys_out, cv.Scalar(0, 0, 0), cv.Scalar(0, 0, 0), 99)

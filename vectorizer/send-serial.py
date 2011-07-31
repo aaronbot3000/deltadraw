@@ -57,14 +57,7 @@ def main():
         MIN_X *= float(RES_X) / RES_Y
         MAX_X *= float(RES_X) / RES_Y
 
-    con = polys
-    pointc = 0
-    polyc = 0
-    while con:
-        pointc += len(con)
-        polyc += 1
-        con = con.h_next()
-    print '\nThe image will contain %d points in %d polygons' %(pointc, polyc)
+    print '\nThe image will contain %d points in %d polygons' %(vect.pointc, vect.polyc)
 
     serial.flushInput();
     serial.flushOutput();
