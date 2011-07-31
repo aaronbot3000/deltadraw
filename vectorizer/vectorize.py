@@ -1,6 +1,6 @@
 #!/usr/bin/python2
 
-import cv
+import cv, sys
 
 INPUT = 'lena.bmp'
 RES_X = 160
@@ -26,10 +26,12 @@ class Vectorizer:
         self.__smooth_val_callback(self.__smooth_val)
 
         key = cv.WaitKey()
-        while not key == ord('q'):
+        while not (key == ord('q') or key == ord('e')):
             key = cv.WaitKey()
 
         self.__del_most_mem()
+        if key == ord('e'):
+            sys.exit(0)
 
         return self.polys_out, self.__newY
 
