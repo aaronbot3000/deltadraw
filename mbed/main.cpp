@@ -40,7 +40,7 @@ void serial_callback() {
 void setup() {
     servos_setup();
     int ret = planner_setup(&planner);
-    pc.baud(9600);
+    pc.baud(115200);
     pc.attach(serial_callback);
     sbuffer_index = 0;
     //pc.printf("Setup: %d\n", ret);

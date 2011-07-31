@@ -5,8 +5,8 @@ from vectorize import Vectorizer
 import struct
 
 #INPUT = '4.1.05.tiff'
-#INPUT = 'test2.jpg'
-INPUT = 'test_text.png'
+INPUT = 'test2.jpg'
+#INPUT = 'test_text.png'
 #INPUT = 'test4.png'
 #INPUT = 'test4.jpg'
 #INPUT = 'test5.jpg'
@@ -25,7 +25,7 @@ MOVE_POINT  = 1
 DRAW_POINT  = 2
 
 SERIAL_PORT = '/dev/ttyACM0'
-BAUD        = 9600
+BAUD        = 115200
 
 END_DATA    = struct.pack('<IIb', 0xFFFF1111, 0xFFFF1111, 0x11)
 
