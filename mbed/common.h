@@ -17,11 +17,11 @@
 #define MAX_Z 11.5
 #define MIN_Z 10.15
 
-#define MAX_X  3
-#define MIN_X -3
+#define MAX_X  3.1
+#define MIN_X -3.1
 
-#define MAX_Y  3
-#define MIN_Y -3
+#define MAX_Y  3.1
+#define MIN_Y -3.1
 
 #define START_Z (MIN_Z - 0.5)
 

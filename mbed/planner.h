@@ -4,7 +4,7 @@
 #include "common.h"
 #include "positioner.h"
 
-#define PLANNER_BUFFER_SIZE 64
+#define PLANNER_BUFFER_SIZE 256
 
 #define MAX_STEP_SIZE   0.0025
 #define MIN_STEP_SIZE   0.0001
@@ -24,8 +24,8 @@ enum Planner_State {
 struct Planner {
     Point buffer[PLANNER_BUFFER_SIZE];
     
-    S08 current;
-    S08 next;
+    S32 current;
+    S32 next;
     
     Point current_pos;
     Point next_pos;

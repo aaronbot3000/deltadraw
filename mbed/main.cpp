@@ -6,15 +6,22 @@
 #include "planner.h"
 #include "i2c.h"
 #include "patterns.h"
+#include "dials.h"
 
 #define moves_z (MAX(draw_z - 0.5, MIN_Z - 0.5))
-
 #define UPDATE_INTERVAL 10000
-#define PERIP_X 0x90
-#define PERIP_Y 0x80
+#define START_TRANS 'B'
+#define END_TRANS 0xFFFF1111
 
 Serial pc(USBTX, USBRX); // tx, rx
 Ticker runner;
+DigitalOut led1(LED1);
+DigitalOut led2(LED2);
+DigitalOut led3(LED3);
+DigitalOut led4(LED4);
+
+volatile U08 serial_buffer[16];
+volatile S32 sbuffer_index;
 
 // trololololol
 DigitalIn go_troll_up(p20);
@@ -26,10 +33,17 @@ DigitalIn go_run_pat(p17);
 static Planner planner;
 static F32 draw_z = MIN_Z; // inches
 
+void serial_callback() {
+    serial_buffer[sbuffer_index++] = pc.getc();
+}
+
 void setup() {
     servos_setup();
     int ret = planner_setup(&planner);
-    pc.printf("Setup: %d\n", ret);
+    pc.baud(9600);
+    pc.attach(serial_callback);
+    sbuffer_index = 0;
+    //pc.printf("Setup: %d\n", ret);
 }
 
 void adj_z() {
@@ -45,61 +59,46 @@ void adj_z() {
     }
 }
 
+void read_dials_callback() {
+    read_dials(&planner, moves_z, draw_z);
+}
+
 void run_pattern() {
     Status status = SUCCESS;
-
     while (status == SUCCESS) {
         status = planner_process(&planner);
     }
 }
 
-static S08 at_draw = 0, debounce = 0;
-void read_dials() {
-    F32 adj_x = 0, adj_y = 0;
-    Point next;
-    U08 in_x, in_y, zch = 0;
-        
-    next = planner.next_pos;
-        
-    // Debounce the switches
-    if (go_adj_z && debounce < 20) {
-        debounce++;
-        if (debounce == 20) {
-            if (at_draw) {
-                next.z = moves_z;
-                at_draw = 0;
-            }
-            else {
-                next.z = draw_z;
-                at_draw = 1;
-            }
-            zch = 1;
-        }
-    }
-    if (!go_adj_z && debounce > 0)
-        debounce--;
+Status fill_buffer() {
+    int i;
+    Point in;
     
-    in_x = i2c_read(PERIP_X);
-    in_y = i2c_read(PERIP_Y);
-    if (in_x != 128 && in_x != I2C_ERROR) {
-        adj_x = ((F32)RESTRICT(in_x - 128, -16, 16))/64.0;
-        //pc.printf("input: %0.5f\n", adj_x);
-        next.x += adj_x;
+    pc.putc(START_TRANS);
+    for (i = 0; i < PLANNER_BUFFER_SIZE - 5; i++) {
+        while (sbuffer_index < 9);
+        if ((*(U32*)(&serial_buffer[0])) == END_TRANS)
+            return END_PAT;
+        sbuffer_index = 0;
+        pc.putc(START_TRANS);
+        
+        in.x = *(F32*)(&serial_buffer[0]);
+        in.y = *(F32*)(&serial_buffer[4]);
+        
+        if (serial_buffer[8] == 1)
+            in.z = moves_z;
+        else
+            in.z = draw_z;
+        add_point_to_buffer(&planner, in);        
     }
-    if (in_y != 128 && in_y != I2C_ERROR) {
-        adj_y = ((F32)RESTRICT(in_y - 128, -16, 16))/64.0;
-        //pc.printf("input: %0.5f\n", adj_y);
-        next.y += adj_y;
-    }
-    if ((adj_x != 0 ||adj_y != 0 || zch) && get_num_in_buffer(&planner) < 1) {
-        //pc.printf("added to buffer");
-        add_point_to_buffer(&planner, next);
-    }
+    
+    return SUCCESS;
 }
+       
 
 int main() {
+    Status status;
     setup();
-
     // adjust z
     while (1) {
         if (go_adj_z) {
@@ -109,26 +108,29 @@ int main() {
             break;
         }
         else {
-            //pc.printf("Restting\n");
-            int ret = reset_position(&planner);
-            //pc.printf("resetting: %d\n", ret);
+            reset_position(&planner);
         }
     }
     
-    wait_ms(1000);
+    wait_ms(500);
     
     while (1) {
-        // Clear the peripheral buffers
-        i2c_read(PERIP_X);
-        i2c_read(PERIP_Y);
-        
-        runner.attach_us(read_dials, UPDATE_INTERVAL);
+
+        runner.attach_us(read_dials_callback, UPDATE_INTERVAL);
         while(1) {
             run_pattern();
             if (go_run_pat)
                 break;
         }
-        draw_ti(moves_z, draw_z, planner.current_pos, &planner);
-        run_pattern();
+        
+        runner.detach();
+        
+        status = SUCCESS;
+        sbuffer_index = 0;
+        while (status == SUCCESS) {
+            status = fill_buffer();
+            run_pattern();
+        }
+        pc.putc('D');
     }
 }

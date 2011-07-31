@@ -1,5 +1,10 @@
 #include "positioner.h"
 
+extern DigitalOut led1;
+extern DigitalOut led2;
+extern DigitalOut led3;
+extern DigitalOut led4;
+
 static Point cur_position;
 
 inline F32 max(F32 a, F32 b) {
@@ -30,8 +35,10 @@ Status set_position(Point target) {
     // Shaddup bout the Z offset
     if (target.x < MIN_X || target.x > MAX_X ||
         target.y < MIN_Y || target.y > MAX_Y ||
-        target.z < MIN_Z - 0.75 || target.z > MAX_Z)
+        target.z < MIN_Z - 0.75 || target.z > MAX_Z) {
+        led3 = 1;
         return FAILURE;
+    }
     
     target_rot.x = target.x;
     target_rot.y = target.y;
@@ -59,7 +66,8 @@ Status set_position(Point target) {
         // Bounds checking
         if (dist > (ARM_UPPER_LEN + lower_radius) || 
             dist < (lower_radius - ARM_UPPER_LEN)) {
-            pc.printf("OH FFFFFFUUUUUUUU %.5f, %.5f, %.5f\n", dist, ARM_UPPER_LEN, lower_radius);
+            //pc.printf("OH FFFFFFUUUUUUUU %.5f, %.5f, %.5f\n", dist, ARM_UPPER_LEN, lower_radius);
+            led2 = 1;
             return FAILURE;
         }
 

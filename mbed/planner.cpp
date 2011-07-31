@@ -1,5 +1,10 @@
 #include "planner.h"
 
+extern DigitalOut led1;
+extern DigitalOut led2;
+extern DigitalOut led3;
+extern DigitalOut led4;
+
 inline F32 dist_between(Point a, Point b) {
     return sqrt((a.x - b.x) * (a.x - b.x) + (a.y - b.y) * (a.y - b.y) + (a.z - b.z) * (a.z - b.z));
 }
@@ -155,6 +160,7 @@ Status planner_process(Planner* planner) {
 
         return SUCCESS;
     }
+    led1 = 1;
     return FAILURE;
 }
 

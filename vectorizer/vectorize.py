@@ -34,7 +34,7 @@ class Vectorizer:
         return self.polys_out, self.__newY
 
     def __load_image(self, image_name, newX):
-        orig = cv.LoadImageM(INPUT)
+        orig = cv.LoadImageM(image_name)
         self.__newY = int(float(newX) / orig.cols * orig.rows)
         self.__init_mem(newX, self.__newY)
 
