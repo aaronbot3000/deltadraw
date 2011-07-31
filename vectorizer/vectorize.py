@@ -12,109 +12,112 @@ INPUT = 'test5.jpg'
 #INPUT = 'test_pattern.jpg'
 RES_X = 160
 
-res_gray = None 
-res_smooth = None 
-canny = None 
-contour_in = None
-contour_out = None
-contours = None
-a_storage = None
-c_storage = None
+class Vectorizer:
+    __canny_lo = 30
+    __canny_hi = 70
+    __canny_apeture = 0
+    __smooth_val = 3
+    __poly_acc = 300
 
-canny_lo = 30
-canny_hi = 70
-canny_apeture = 3
+    def get_polygons(self, image_name, newX):
+        cv.NamedWindow('Canny', cv.CV_WINDOW_NORMAL)
+        cv.NamedWindow('Contours', cv.CV_WINDOW_NORMAL)
+        cv.CreateTrackbar('smooth', 'Canny', self.__smooth_val, 10, self.__smooth_val_callback)
+        cv.CreateTrackbar('apeture', 'Canny', self.__canny_apeture, 2, self.__canny_apeture_callback)
+        cv.CreateTrackbar('lowThreshold',  'Canny', self.__canny_lo, 100, self.__canny_lo_callback)
+        cv.CreateTrackbar('highThreshold', 'Canny', self.__canny_hi, 100, self.__canny_hi_callback)
+        cv.CreateTrackbar('poly acc', 'Contours', self.__poly_acc, 1000, self.__poly_acc_callback)
 
-poly_acc = 3
+        self.load_image(image_name, newX)
+        self.__smooth_val_callback(self.__smooth_val)
+
+        key = cv.WaitKey()
+        while not key == ord('q'):
+            key = cv.WaitKey()
+
+        self.__del_most_mem()
+
+        return self.polys_out
+
+    def load_image(self, image_name, newX):
+        orig = cv.LoadImageM(INPUT)
+        newY = int(float(newX) / orig.cols * orig.rows)
+
+        self.init_mem(newX, newY)
+
+        cv.Resize(orig, self.res)
+        cv.CvtColor(self.res, self.__res_gray, cv.CV_RGB2GRAY)
+
+    def init_mem(self, newX, newY):
+        self.res = cv.CreateMat(newY, newX, cv.CV_8UC3)
+        self.__res_gray = cv.CreateMat(newY, newX, cv.CV_8UC1)
+        self.res_smooth = cv.CreateMat(newY, newX, cv.CV_8UC1)
+        self.canny = cv.CreateMat(newY, newX, cv.CV_8UC1)
+        self.contour_in = cv.CreateMat(newY, newX, cv.CV_8UC1)
+        self.contour_out = cv.CreateMat(newY, newX, cv.CV_8UC3)
+        self.c_storage = cv.CreateMemStorage()
+        self.a_storage = cv.CreateMemStorage()
+
+    def __del_most_mem(self):
+        del self.__res_gray
+        del self.res_smooth
+        del self.canny
+        del self.contour_in
+        del self.contour_out
+        del self.contours
+        del self.c_storage
+        cv.DestroyAllWindows()
+
+    def __refresh_poly(self):
+        self.polys_out = cv.ApproxPoly(self.contours, self.a_storage, cv.CV_POLY_APPROX_DP, self.__poly_acc / 100.0, -1)
+
+        con = self.polys_out
+        index = 0
+        polyc = 0
+        while not con == None:
+            index += len(con)
+            polyc += 1
+            con = con.h_next()
+        print '\n%d polygons'%polyc
+        print '%d points'%index
+
+        cv.SetZero(self.contour_out)
+        cv.DrawContours(self.contour_out, self.polys_out, cv.Scalar(255, 0, 0), cv.Scalar(0, 0, 255), 99)
+
+        cv.ShowImage('Contours', self.contour_out)
+
+    def __refresh_canny(self):
+        cv.Canny(self.res_smooth, self.canny, self.__canny_lo, self.__canny_hi, self.__canny_apeture * 2 + 3)
+        cv.ShowImage('Canny', self.canny)
+        cv.Copy(self.canny, self.contour_in)
+        self.contours = cv.FindContours(self.contour_in, self.c_storage, cv.CV_RETR_LIST, cv.CV_CHAIN_APPROX_NONE)
+        self.__refresh_poly()
+
+    def __poly_acc_callback(self, value):
+        self.__poly_acc = value
+        self.__refresh_poly()
+
+    def __smooth_val_callback(self, value):
+        self.__smooth_val = value
+        cv.Smooth(self.__res_gray, self.res_smooth, cv.CV_GAUSSIAN, self.__smooth_val * 2 + 1, self.__smooth_val * 2 + 1)
+        self.__refresh_canny()
+
+    def __canny_lo_callback(self, value):
+        self.__canny_lo = value
+        self.__refresh_canny()
+
+    def __canny_hi_callback(self, value):
+        self.__canny_hi = value
+        self.__refresh_canny()
+
+    def __canny_apeture_callback(self, value):
+        self.__canny_apeture = value
+        self.__refresh_canny()
 
 def main():
-    global res_gray, res_smooth, canny, contour_in, contour_out, c_storage, a_storage
-
-    orig = cv.LoadImageM(INPUT)
-
-    newX = RES_X
-    newY = int(float(newX) / orig.cols * orig.rows)
-
-    res = cv.CreateMat(newY, newX, cv.CV_8UC3)
-    res_gray = cv.CreateMat(newY, newX, cv.CV_8UC1)
-    res_smooth = cv.CreateMat(newY, newX, cv.CV_8UC1)
-    canny = cv.CreateMat(newY, newX, cv.CV_8UC1)
-    contour_in = cv.CreateMat(newY, newX, cv.CV_8UC1)
-    contour_out = cv.CreateMat(newY, newX, cv.CV_8UC3)
-    c_storage = cv.CreateMemStorage()
-    a_storage = cv.CreateMemStorage()
-    cv.NamedWindow('Canny', cv.CV_WINDOW_NORMAL)
-    cv.NamedWindow('Contours', cv.CV_WINDOW_NORMAL)
-
-    cv.CreateTrackbar('smooth', 'Canny', 3, 10, smooth_callback)
-    cv.CreateTrackbar('apeture', 'Canny', 0, 2, canny_apeture_callback)
-    cv.CreateTrackbar('lowThreshold', 'Canny', 30, 100, canny_lo_callback)
-    cv.CreateTrackbar('highThreshold', 'Canny', 70, 100, canny_hi_callback)
-    cv.CreateTrackbar('poly acc', 'Contours', 300, 1000, poly_acc_callback)
-
-    cv.Resize(orig, res)
-    cv.CvtColor(res, res_gray, cv.CV_RGB2GRAY)
-    cv.Copy(res, contour_out)
-
-    smooth_callback(3)
-
-    key = cv.WaitKey()
-    while not key == ord('q'):
-        key = cv.WaitKey()
-
-def refresh_poly():
-    global poly_acc, contours, a_storage
-    polys = cv.ApproxPoly(contours, a_storage, cv.CV_POLY_APPROX_DP, poly_acc, -1)
-
-    con = polys
-    index = 0
-    polyc = 0
-    while not con == None:
-        index += len(con)
-        polyc += 1
-        con = con.h_next()
-    print '%d polygons'%polyc
-    print '%d points'%index
-
-    cv.SetZero(contour_out)
-    cv.DrawContours(contour_out, polys, cv.Scalar(255, 0, 0), cv.Scalar(0, 0, 255), 99)
-
-    cv.ShowImage('Contours', contour_out)
-
-
-def refresh_canny():
-    global res_smooth, canny, canny_lo, canny_hi, canny_apeture, contour_in, contour_out, c_storage, contours
-    cv.Canny(res_smooth, canny, canny_lo, canny_hi, canny_apeture)
-    cv.ShowImage('Canny', canny)
-    cv.Copy(canny, contour_in)
-    contours = cv.FindContours(contour_in, c_storage, cv.CV_RETR_LIST, cv.CV_CHAIN_APPROX_NONE)
-    refresh_poly()
-
-def poly_acc_callback(value):
-    global poly_acc
-    poly_acc = value/100.0
-    refresh_poly()
-
-def smooth_callback(value):
-    global res_gray, res_smooth
-    value = value * 2 + 1
-    cv.Smooth(res_gray, res_smooth, cv.CV_GAUSSIAN, value, value)
-    refresh_canny()
-
-def canny_lo_callback(value):
-    global canny_lo
-    canny_lo = value
-    refresh_canny()
-
-def canny_hi_callback(value):
-    global canny_hi
-    canny_hi = value
-    refresh_canny()
-
-def canny_apeture_callback(value):
-    global canny_apeture
-    canny_apeture = value * 2 + 3
-    refresh_canny()
+    a = Vectorizer()
+    a.get_polygons(INPUT, RES_X)
+    a.get_polygons(INPUT, RES_X)
 
 if __name__ == '__main__':
     main()
