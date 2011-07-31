@@ -28,7 +28,7 @@ class Vectorizer:
         cv.CreateTrackbar('highThreshold', 'Canny', self.__canny_hi, 100, self.__canny_hi_callback)
         cv.CreateTrackbar('poly acc', 'Contours', self.__poly_acc, 1000, self.__poly_acc_callback)
 
-        self.load_image(image_name, newX)
+        self.__load_image(image_name, newX)
         self.__smooth_val_callback(self.__smooth_val)
 
         key = cv.WaitKey()
@@ -39,16 +39,16 @@ class Vectorizer:
 
         return self.polys_out
 
-    def load_image(self, image_name, newX):
+    def __load_image(self, image_name, newX):
         orig = cv.LoadImageM(INPUT)
         newY = int(float(newX) / orig.cols * orig.rows)
 
-        self.init_mem(newX, newY)
+        self.__init_mem(newX, newY)
 
         cv.Resize(orig, self.res)
         cv.CvtColor(self.res, self.__res_gray, cv.CV_RGB2GRAY)
 
-    def init_mem(self, newX, newY):
+    def __init_mem(self, newX, newY):
         self.res = cv.CreateMat(newY, newX, cv.CV_8UC3)
         self.__res_gray = cv.CreateMat(newY, newX, cv.CV_8UC1)
         self.res_smooth = cv.CreateMat(newY, newX, cv.CV_8UC1)
