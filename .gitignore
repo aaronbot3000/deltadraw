@@ -6,3 +6,6 @@ controller/Release/*
 *~
 controller/.settings*
 controller/.launches*
+vectorizer/*.jpg
+vectorizer/*.png
+vectorizer/*.gif

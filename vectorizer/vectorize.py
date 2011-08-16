@@ -29,7 +29,6 @@ class Vectorizer:
         while not (key == ord('q') or key == ord('e')):
             key = cv.WaitKey()
 
-        self.__del_most_mem()
         if key == ord('e'):
             sys.exit(0)
 
@@ -53,7 +52,8 @@ class Vectorizer:
         self.c_storage = cv.CreateMemStorage()
         self.a_storage = cv.CreateMemStorage()
 
-    def __del_most_mem(self):
+    def del_mem(self):
+        del self.res
         del self.__res_gray
         del self.res_smooth
         del self.canny
@@ -61,6 +61,7 @@ class Vectorizer:
         del self.contour_out
         del self.contours
         del self.c_storage
+        del self.a_storage
         cv.DestroyAllWindows()
 
     def __refresh_poly(self):
@@ -84,6 +85,7 @@ class Vectorizer:
 
     def __refresh_canny(self):
         cv.Canny(self.res_smooth, self.canny, self.__canny_lo, self.__canny_hi, self.__canny_apeture * 2 + 3)
+        #cv.Threshold(self.res_smooth, self.canny, self.__canny_lo * 2, 255, cv.CV_THRESH_BINARY)
         cv.ShowImage('Canny', self.canny)
         cv.Copy(self.canny, self.contour_in)
         self.contours = cv.FindContours(self.contour_in, self.c_storage, cv.CV_RETR_LIST, cv.CV_CHAIN_APPROX_NONE)

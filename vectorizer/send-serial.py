@@ -75,19 +75,19 @@ def main():
         print 'Starting polygon #%d' %poly_count
 
         # Move to the first point in the polygon
-        next_x = map_range(cur_p[0][0], 0, RES_X, MIN_X, MAX_X)
+        next_x = -map_range(cur_p[0][0], 0, RES_X, MIN_X, MAX_X)
         next_y = map_range(cur_p[0][1], 0, RES_Y, MIN_Y, MAX_Y)
         data = struct.pack('<ffb', next_x, next_y, MOVE_POINT);
         send_wait_ack(data)
 
         # Send the polygon
         for point in cur_p:
-            next_x = map_range(point[0], 0, RES_X, MIN_X, MAX_X)
+            next_x = -map_range(point[0], 0, RES_X, MIN_X, MAX_X)
             next_y = map_range(point[1], 0, RES_Y, MIN_Y, MAX_Y)
             data = struct.pack('<ffb', next_x, next_y, DRAW_POINT);
             send_wait_ack(data)
 
-        next_x = map_range(cur_p[-1][0], 0, RES_X, MIN_X, MAX_X)
+        next_x = -map_range(cur_p[-1][0], 0, RES_X, MIN_X, MAX_X)
         next_y = map_range(cur_p[-1][1], 0, RES_Y, MIN_Y, MAX_Y)
         data = struct.pack('<ffb', next_x, next_y, MOVE_POINT);
         send_wait_ack(data)
@@ -100,6 +100,7 @@ def main():
     send_wait_ack(END_DATA)
 
     raw_input("press enter to continue")
+    vect.del_mem()
 
 
 if __name__ == '__main__':
