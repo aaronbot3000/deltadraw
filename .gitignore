@@ -1,11 +1,15 @@
 *.swp
 *.pyc
 ~*
+*~
 controller/Debug/*
 controller/Release/*
-*~
 controller/.settings*
 controller/.launches*
+pythagoras/Debug/*
+pythagoras/Release/*
+pythagoras/.settings*
+pythagoras/.launches*
 vectorizer/*.jpg
 vectorizer/*.png
 vectorizer/*.gif
