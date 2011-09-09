@@ -1,0 +1,15 @@
+<?xml version="1.0" encoding="utf-8"?>
+<LinearLayout xmlns:android="http://schemas.android.com/apk/res/android"
+    android:orientation="vertical"
+    android:layout_width="fill_parent"
+    android:layout_height="fill_parent"
+    android:weightSum="1">
+<SeekBar android:layout_height="wrap_content" android:layout_width="match_parent" android:id="@+id/slider_blur" android:progress="20"></SeekBar>
+<SeekBar android:layout_height="wrap_content" android:layout_width="match_parent" android:id="@+id/slider_high_thresh"></SeekBar>
+<SeekBar android:layout_height="wrap_content" android:layout_width="match_parent" android:id="@+id/slider_low_thresh"></SeekBar>
+<ImageView android:layout_height="wrap_content" android:src="@android:drawable/ic_menu_camera" android:layout_width="match_parent" android:layout_weight="1.01" android:id="@+id/image_first_stage"></ImageView>
+<LinearLayout android:layout_height="wrap_content" android:id="@+id/linearLayout1" android:layout_width="match_parent" android:weightSum="1">
+    <Button android:layout_height="wrap_content" android:layout_width="wrap_content" android:layout_weight="0.50" android:text="@string/st_take_picture" android:id="@+id/button_take_picture"></Button>
+    <Button android:layout_height="wrap_content" android:layout_width="wrap_content" android:layout_weight="0.50" android:enabled="false" android:id="@+id/button_continue" android:text="@string/st_continue"></Button>
+</LinearLayout>
+</LinearLayout>
