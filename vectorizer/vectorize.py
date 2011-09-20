@@ -26,8 +26,9 @@ class Vectorizer:
         self.__smooth_val_callback(self.__smooth_val)
 
         key = cv.WaitKey()
-        while not (key == ord('q') or key == ord('e')):
+        while not (key == 1048689 or key == ord('e')):
             key = cv.WaitKey()
+            print key
 
         if key == ord('e'):
             sys.exit(0)

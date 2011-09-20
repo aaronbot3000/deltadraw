@@ -4,7 +4,7 @@
     android:layout_width="fill_parent"
     android:layout_height="fill_parent"
     android:weightSum="1">
-<SeekBar android:layout_height="wrap_content" android:layout_width="match_parent" android:id="@+id/slider_blur" android:progress="20"></SeekBar>
+<SeekBar android:layout_height="wrap_content" android:layout_width="match_parent" android:id="@+id/slider_blur" android:progress="3"></SeekBar>
 <SeekBar android:layout_height="wrap_content" android:layout_width="match_parent" android:id="@+id/slider_high_thresh"></SeekBar>
 <SeekBar android:layout_height="wrap_content" android:layout_width="match_parent" android:id="@+id/slider_low_thresh"></SeekBar>
 <ImageView android:layout_height="wrap_content" android:src="@android:drawable/ic_menu_camera" android:layout_width="match_parent" android:layout_weight="1.01" android:id="@+id/image_first_stage"></ImageView>

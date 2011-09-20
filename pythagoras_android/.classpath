@@ -4,5 +4,6 @@
 	<classpathentry kind="src" path="gen"/>
 	<classpathentry kind="con" path="com.android.ide.eclipse.adt.ANDROID_FRAMEWORK"/>
 	<classpathentry combineaccessrules="false" kind="src" path="/org_opencv"/>
+	<classpathentry kind="src" path="org_opencv_src"/>
 	<classpathentry kind="output" path="bin"/>
 </classpath>

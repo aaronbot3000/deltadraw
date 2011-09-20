@@ -30,4 +30,11 @@
 		<nature>com.android.ide.eclipse.adt.AndroidNature</nature>
 		<nature>org.eclipse.jdt.core.javanature</nature>
 	</natures>
+	<linkedResources>
+		<link>
+			<name>org_opencv_src</name>
+			<type>2</type>
+			<locationURI>_android_org_opencv_231e4df8/src</locationURI>
+		</link>
+	</linkedResources>
 </projectDescription>
