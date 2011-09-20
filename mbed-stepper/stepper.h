@@ -15,8 +15,9 @@
 extern Serial pc;
 #endif
 
+void reset_steppers();
 void update_pos();
-const float* get_pos();
+F32* get_angles();
 Status move_steppers(int steppers, int directions);
 
 #endif

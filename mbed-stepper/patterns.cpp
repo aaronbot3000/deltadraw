@@ -20,7 +20,7 @@ int draw_star(F32 moves_z, F32 draw_z, Point* buffer) {
     e.x = -2;
     e.y = -2;
     e.z = draw_z;
-	int index = 0;
+    int index = 0;
     buffer[index++] = g;
     buffer[index++] = a;
     buffer[index++] = b;
@@ -29,10 +29,11 @@ int draw_star(F32 moves_z, F32 draw_z, Point* buffer) {
     buffer[index++] = e;
     buffer[index++] = a;
     buffer[index++] = g;
-	return index;
+    return index;
 }
 
-int draw_square_large(F32 moves_z, F32 draw_z, Point* planner) {
+int draw_square_large(F32 moves_z, F32 draw_z, Point* buffer) {
+    int index = 0;
     Point a, b, c, d, g;
     g.x =  0;
     g.y =  4;
@@ -57,10 +58,11 @@ int draw_square_large(F32 moves_z, F32 draw_z, Point* planner) {
     buffer[index++] = d;
     buffer[index++] = a;
     buffer[index++] = g;
-	return index;
+    return index;
 }
 
-int draw_square_nn(F32 moves_z, F32 draw_z, Point* planner) {
+int draw_square_nn(F32 moves_z, F32 draw_z, Point* buffer) {
+    int index = 0;
     Point a, b, c, d, g;
     g.x = -3;
     g.y = -3;
@@ -85,10 +87,11 @@ int draw_square_nn(F32 moves_z, F32 draw_z, Point* planner) {
     buffer[index++] = d;
     buffer[index++] = a;
     buffer[index++] = g;
-	return index;
+    return index;
 }
 
-int draw_ti(F32 moves_height, F32 draw_height, Point off, Point* planner){
+int draw_ti(F32 moves_height, F32 draw_height, Point off, Point* buffer){
+    int index = 0;
     Point a;
     // H
     a.x = 0; a.y = 0; a.z = moves_height;
@@ -199,5 +202,5 @@ int draw_ti(F32 moves_height, F32 draw_height, Point off, Point* planner){
     a.x = 2.75; a.y = 2; a.z = moves_height;
     a.x += off.x; a.y += off.y;
     buffer[index++] = a;
-	return index;
+    return index;
 }

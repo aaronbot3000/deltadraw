@@ -55,6 +55,40 @@ struct Point {
     F32 x;
     F32 y;
     F32 z;
+    
+    Point& operator=(const Point &rhs) {
+        x = rhs.x;
+        y = rhs.y;
+        z = rhs.z;
+        return *this;
+    }
+    
+    /*
+    Point& operator=(Point &rhs) {
+        x = rhs.x;
+        y = rhs.y;
+        z = rhs.z;
+        return *this;
+    }
+    */
+    
+    /*
+    Point(const Point& in) {
+        x = in.x;
+        y = in.y;
+        z = in.z;
+    }
+    */
+    
+    Point(volatile Point& in) {
+        x = in.x;
+        y = in.y;
+        z = in.z;
+    }
+    
+    Point() {
+        x = y = z = 0;
+    }
 };
 
 #endif

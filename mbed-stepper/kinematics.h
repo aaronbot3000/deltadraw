@@ -11,6 +11,6 @@
 #define COS_240 -0.5
 
 Status inv_kinematics(F32* result, Point target);
-Status fwd_kinematics(Point target, F32* angles);
+Status fwd_kinematics(Point* target, F32* angles);
 
 #endif

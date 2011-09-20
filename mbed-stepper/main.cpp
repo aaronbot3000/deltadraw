@@ -2,7 +2,7 @@
 
 #include "common.h"
 #include "stepper.h"
-#include "plan-positioner.h"
+#include "plan-position.h"
 #include "patterns.h"
 
 #define moves_z (MAX(draw_z - 0.5, MIN_Z - 0.5))
@@ -11,7 +11,7 @@
 #define END_TRANS 0xFFFF1111
 
 #define BUFFER_SIZE 256
-#define INC_ONE(a) (((a) + 1) % PLANNER_BUFFER_SIZE)
+#define INC_ONE(a) (((a) + 1) % BUFFER_SIZE)
 
 Serial pc(USBTX, USBRX); // tx, rx
 DigitalOut led1(LED1);
@@ -39,20 +39,23 @@ void setup() {
     pc.baud(115200);
     pc.attach(serial_callback);
     sbuffer_index = 0;
-	cur_buf_index = 0;
-	nxt_buf_index = 0;
-    //pc.printf("Setup: %d\n", ret);
+    cur_buf_index = 0;
+    nxt_buf_index = 0;
+    pc.printf("Setup\r\n");
 }
 
 void run_pattern() {
     Status status = SUCCESS;
     while (status == SUCCESS) {
         if (robot_met_goal()) {
-			if (cur_buf_index != nxt_buf_index) {
-				set_goal(input_buffer[cur_buf_index]);
-				cur_buf_index = INC_ONE(cur_buf_index);
-			}
-		}
+            if (cur_buf_index != nxt_buf_index) {
+                set_goal(input_buffer[cur_buf_index]);
+                cur_buf_index = INC_ONE(cur_buf_index);
+            }
+            else {
+                break;
+            }
+        }
     }
 }
 
@@ -60,9 +63,9 @@ Status fill_buffer() {
     int i;
     Point in;
     
-	runner.detach();
+    runner.detach();
     pc.putc(START_TRANS);
-    for (i = 0; i < PLANNER_BUFFER_SIZE - 5; i++) {
+    for (i = 0; i < BUFFER_SIZE - 5; i++) {
         while (sbuffer_index < 9);
         if ((*(U32*)(&serial_buffer[0])) == END_TRANS)
             return END_PAT;
@@ -77,22 +80,22 @@ Status fill_buffer() {
         else
             in.z = draw_z;
 
-		if (INC_ONE(nxt_buf_index) == cur_buf_index)
-			return FAILURE;
-		input_buffer[nxt_buf_index] = in;
-		nxt_buf_index = INC_ONE(nxt_buf_index);
+        if (INC_ONE(nxt_buf_index) == cur_buf_index)
+            return FAILURE;
+        input_buffer[nxt_buf_index] = in;
+        nxt_buf_index = INC_ONE(nxt_buf_index);
     }
-	runner.attach_us(catch_interrupt, 2000);
+    runner.attach_us(catch_interrupt, 200000);
     
     return SUCCESS;
 }
 
 int main() {
-    Status status;
+    //Status status;
     setup();
-	runner.attach_us(catch_interrupt, 2000);
+    runner.attach_us(catch_interrupt, 200000);
     // adjust z
-	/*
+    /*
     while (1) {
         if (go_adj_z) {
             adj_z();
@@ -106,11 +109,12 @@ int main() {
     }
     
     wait_ms(500);
-	*/
+    */
     
     while (true) {
+        pc.printf("starting pattern\r\n");
         nxt_buf_index = draw_square_large(moves_z, draw_z, input_buffer);
-		cur_buf_index = 0;
+        cur_buf_index = 0;
         run_pattern();
     }
     

@@ -3,14 +3,15 @@
 
 #include "common.h"
 #include "kinematics.h"
+#include "stepper.h"
 #include <cmath>
 
 #define MAX_STEP_SIZE   1
-#define MIN_STEP_SIZE   0.1
+#define MIN_STEP_SIZE   0.5
 
 #define MIN_DIST 0.005
 
-#define EST_STEP_SIZE 0.05 // inches
+#define EST_STEP_SIZE 0.01 // inches
 
 #define ACCL_ZONE .5 // inches
 
@@ -22,8 +23,10 @@ enum Planner_State {
     PLR_WAIT
 };
 
+void reset_pen();
+bool robot_met_goal();
 void catch_interrupt();
 void set_goal(Point in);
-void take_step();
+Status take_step();
 
 #endif
