@@ -69,18 +69,17 @@ Status inv_kinematics(F32* result, Point target) {
 
 Status fwd_kinematics(Point* target, F32* angles) {
     F32 a1 = ARM_UPPER_LEN * cos(angles[0]) - SERVO_XOFF - HAND_XOFF;
-    F32 c1 = ARM_UPPER_LEN * sin(-angles[0]) - SERVO_ZOFF - HAND_ZOFF;
+    F32 c1 = ARM_UPPER_LEN * sin(angles[0]) - SERVO_ZOFF - HAND_ZOFF;
 
-    F32 a2 = -(ARM_UPPER_LEN * cos(angles[1]) - SERVO_XOFF - HAND_XOFF) * COS_30;
-    F32 b2 = a2 * TAN_60;
-    F32 c2 = ARM_UPPER_LEN * sin(-angles[1]) - SERVO_ZOFF - HAND_ZOFF;
+	F32 arm2 = (ARM_UPPER_LEN * cos(angles[1]) - SERVO_XOFF - HAND_XOFF);
+    F32 a2 = -arm2 * COS_60;
+    F32 b2 = arm2 * SIN_60;
+    F32 c2 = ARM_UPPER_LEN * sin(angles[1]) - SERVO_ZOFF - HAND_ZOFF;
 
-    F32 a3 = -(ARM_UPPER_LEN * cos(angles[2]) - SERVO_XOFF - HAND_XOFF) * COS_30;
-    F32 b3 = -a3 * TAN_60;
-    F32 c3 = ARM_UPPER_LEN * sin(-angles[2]) - SERVO_ZOFF - HAND_ZOFF;
-
-    F32 dnm = (a2 - a1) * b3 - (a3 - a1) * b2;
-    F32 dnm2 = r2(dnm);
+	F32 arm3 = (ARM_UPPER_LEN * cos(angles[2]) - SERVO_XOFF - HAND_XOFF);
+    F32 a3 = -arm3 * COS_60;
+    F32 b3 = -arm3 * SIN_60;
+    F32 c3 = ARM_UPPER_LEN * sin(angles[2]) - SERVO_ZOFF - HAND_ZOFF;
 
     F32 w1 = r2(a1) +          r2(c1);
     F32 w2 = r2(a2) + r2(b2) + r2(c2);
@@ -94,18 +93,21 @@ Status fwd_kinematics(Point* target, F32* angles) {
 	F32 E = 2 * (b3);
 	F32 F = 2 * (c3 - c1);
 
+    F32 dnm = B * D - A * E;
+    F32 dnm2 = r2(dnm);
+
     // a = (m1 * z + n1)/dnm
-	F32 m1 = C * D - A * F;
+	F32 m1 = -(C * D - A * F);
 	F32 n1 = D * (w2 - w1) - A * (w3 - w1);
 
     // b = (m2 * z + n2)/dnm;
-	F32 m2 = C * E - B * F;
+	F32 m2 = -(C * E - B * F);
 	F32 n2 = E * (w2 - w1) - B * (w3 - w1);
 
     // m*z^2 + n*z + z = 0
 	F32 a = (r2(m1) + r2(m2)) / dnm2 + 1;
-	F32 b = 2 * (m1 * n1 + m2 * n2) / dnm2 + 2 * (a1 * m1) / dnm + 2 * c1;
-	F32 c = r2(a1) + r2(c1) + (r2(n1) + r2(n2)) / dnm2 + 2 * a1 * n1 - r2(ARM_LOWER_LEN);
+	F32 b = 2 * ((m1 * n1 + m2 * n2) / dnm2 - (a1 * m1) / dnm - c1);
+	F32 c = r2(a1) + r2(c1) + (r2(n1) + r2(n2)) / dnm2 - 2 * a1 * n1 / dnm - r2(ARM_LOWER_LEN);
 
     // discriminant
     F32 d = r2(b) - 4 * a * c;
