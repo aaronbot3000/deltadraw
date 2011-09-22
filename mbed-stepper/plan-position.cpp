@@ -1,22 +1,14 @@
 #include "plan-position.h"
 
-static volatile Point goal;
-static volatile bool new_goal = false;
-static volatile bool met_goal = true;
-
-static Point cur_pos;
-static Planner_State state = PLR_ACCL;
-static F32 ideal_angles[3];
-static F32 prev_dist;
-static F32 full_dist;
-
 extern Serial pc;
+
+static Planner* cur_plan;
 
 inline F32 dist_between(Point a, Point b) {
     return sqrt((a.x - b.x) * (a.x - b.x) + (a.y - b.y) * (a.y - b.y) + (a.z - b.z) * (a.z - b.z));
 }
 
-inline void conform_goal(volatile Point* in) {
+inline void conform_goal(Point* in) {
     in->x = RESTRICT(in->x, MIN_X, MAX_X);
     in->y = RESTRICT(in->y, MIN_Y, MAX_Y);
     in->z = RESTRICT(in->z, MIN_Z, MAX_Z);
@@ -26,7 +18,7 @@ inline F32 max(F32 a, F32 b) {
     return (a > b ? a : b);
 }
 
-F32 max(F32 a, F32 b, F32 c) {
+inline F32 max(F32 a, F32 b, F32 c) {
     a = fabs(a);
     b = fabs(b);
     c = fabs(c);
@@ -38,55 +30,50 @@ F32 max(F32 a, F32 b, F32 c) {
     }
 }
 
-void catch_interrupt() {
-    if (met_goal && !new_goal) {
-        return;
-    }
-    else if (met_goal && new_goal) {
-        //update_pos();
-        fwd_kinematics(&cur_pos, get_angles());
-        pc.printf("position: %f %f %f\r\n", cur_pos.x, cur_pos.y, cur_pos.z);
-        full_dist = prev_dist = dist_between(cur_pos, goal);
-        met_goal = false;
-        take_step();
-    }
-    else if (!met_goal) {
-        take_step();
-    }
+void setup_planner(Planner* planner) {
+	update_pos();
+	planner->angles_actual = get_angles();
+	
+	planner->buf_ind = 0;
+	planner->buf_next = 1;
+
+	planner->steps_to_next = 0;
+	
+	planner->buffer[0].x = 0;
+	planner->buffer[0].y = 0;
+	planner->buffer[0].z = START_Z;
+
+	cur_plan = planner;
+
+	planner->finished = false;
+	planner->errored = false;
+
+	planner->runner.attach_us(take_step, 200000);
 }
 
-void set_goal(const Point in) {
-    (Point)goal = in;
-    new_goal = true;
+bool add_point_to_buffer(Planner* planner, Point in) {
+	if (INC_ONE(planner->buf_next) == planner->buf_ind)
+		return false;
+	planner->buffer[planner->buf_next].x = in.x;
+	planner->buffer[planner->buf_next].y = in.y;
+	planner->buffer[planner->buf_next].z = in.z;
+	planner->buf_next = INC_ONE(planner->buf_next);
+	planner->finished = false;
+	return true;
 }
 
-void reset_pen() {
-    goal.x = 0;
-    goal.y = 0;
-    goal.z = START_Z;
-    state = PLR_ACCL;
-    full_dist = 0;
-    prev_dist = 0;
-    new_goal = true;
-    
-    
-    cur_pos.x = 0;
-    cur_pos.y = 0;
-    cur_pos.z = START_Z;
-    ideal_angles[0] = 0;
-    ideal_angles[1] = 0;
-    ideal_angles[2] = 0;
-    reset_steppers();
+void pause_steppers(Planner* planner) {
+	planner->runner.detach();
 }
 
-bool robot_met_goal() {
-    return met_goal;
+void resume_steppers(Planner* planner) {
+	planner->runner.attach_us(take_step, 200000);
 }
-Timer timer;
-Status take_step() {
-    //pc.printf("goal: %f %f %f\r\n", goal.x, goal.y, goal.z);
-    timer.reset();
-    timer.start();
+
+Status get_next_steps(Planner* planner) {
+	Point goal = planner->buffer[planner->buf_ind];
+	Point cur_pos = planner->current_pos;
+
     conform_goal(&goal);
 
     F32 dx = goal.x - cur_pos.x;
@@ -94,13 +81,16 @@ Status take_step() {
     F32 dz = goal.z - cur_pos.z;
 
     F32 dist = dist_between(cur_pos, goal);
-    F32 new_angles[3];
     F32 step = 0;
-    F32* actual_angles = get_angles();
     Point test;
-    
+
+	F32 full_dist = planner->full_dist;
+	F32 prev_dist = planner->prev_dist;
+
+	F32 new_angles[3];
+
     if (dist < MIN_DIST)
-        return SUCCESS;
+        return END_PAT;
 
     // Inverse square root!!!
     F32 inv_vec_mag = 1 / dist;
@@ -110,77 +100,82 @@ Status take_step() {
     
     // Apply acceleration and deceleration and
     // acquire next step size
-    if (state == PLR_ACCL) {
+    if (planner->state == PLR_ACCL) {
         if (full_dist - prev_dist > ACCL_ZONE)
-            state = PLR_FULL;
+            planner->state = PLR_FULL;
 
         else if (prev_dist < ACCL_ZONE && prev_dist * 2 < full_dist)
-            state = PLR_DECL;
+            planner->state = PLR_DECL;
 
         else
             step = MAP(full_dist - prev_dist, 0, ACCL_ZONE, MIN_STEP_SIZE, MAX_STEP_SIZE);
     }
-    if (state == PLR_FULL) {
+    if (planner->state == PLR_FULL) {
         if (prev_dist < ACCL_ZONE)
-            state = PLR_DECL;
+            planner->state = PLR_DECL;
 
         else
             step = MAX_STEP_SIZE;
     }
-    if (state == PLR_DECL) {
+    if (planner->state == PLR_DECL) {
         Point test;
         step = MAP(prev_dist, 0, ACCL_ZONE, MIN_STEP_SIZE, MAX_STEP_SIZE);
 
-        test.x = cur_pos.x + dx * EST_STEP_SIZE * 0.5;
-        test.y = cur_pos.y + dy * EST_STEP_SIZE * 0.5;
-        test.z = cur_pos.z + dz * EST_STEP_SIZE * 0.5;
+        test.x = cur_pos.x + dx * step;
+        test.y = cur_pos.y + dy * step;
+        test.z = cur_pos.z + dz * step;
         
         dist = dist_between(test, goal);
         
         if (dist >= prev_dist || dist < MIN_DIST) {
-            met_goal = true;
-            return SUCCESS;
+            return END_PAT;
         }
     }
     
-    // Generate an overestimated step
-    test.x = cur_pos.x + dx * EST_STEP_SIZE;
-    test.y = cur_pos.y + dy * EST_STEP_SIZE;
-    test.z = cur_pos.z + dz * EST_STEP_SIZE;
+    // Generate a step
+    cur_pos.x += dx * step;
+    cur_pos.y += dy * step;
+    cur_pos.z += dz * step;
     
-    pc.printf("test: %f %f %f\r\n", test.x, test.y, test.z);
+    pc.printf("test: %f %f %f\r\n", cur_pos.x, cur_pos.y, cur_pos.z);
 
-    inv_kinematics(new_angles, test);
+    if (inv_kinematics(new_angles, cur_pos) != SUCCESS) {
+		return FAILURE;
+	}
     
     pc.printf("newangles: %f %f %f\r\n", new_angles[0], new_angles[1], new_angles[2]);
 
     // Get the difference in angles
     for (int i = 0; i < 3; i++) {
-        new_angles[i] -= ideal_angles[i];
+		planner->angles_ideal[i] = planner->angles_actual[i];
+        new_angles[i] -= planner->angles_actual[i];
     }
 
     F32 max_diff = max(new_angles[0], new_angles[1], new_angles[2]);
-    
-    // Scale down so the largest step = 1 stepper step size
-    F32 scaling_factor = 1;
-    if (max_diff > STEPPER_STEP_SIZE)
-        scaling_factor = STEPPER_STEP_SIZE * step / max_diff;
-        
-    printf("max diff: %f scaling factor %f\r\n", max_diff, scaling_factor);
 
-    int direction = 0;
-    int make_step = 0;
+	// Number of steps to move max_diff amount
+	planner->steps_to_next = floor(max_diff / STEPPER_STEP_SIZE + 0.500001);
+    
+	for (int i = 0; i < 3; i++) {
+		planner->angles_step[i] = new_angles[i] / planner->steps_to_next;
+	}
+
+	return SUCCESS;
+}
+
+Status make_next_step(Planner* planner) {
+    S32 make_step = 0;
+    S32 direction = 0;
 
     // For all steppers, if the ideal angles are 1 step or greater from the actual angles,
     // move the steppers to them.
     for (int i = 0; i < 3; i++) {
-        new_angles[i] *= scaling_factor;
-        ideal_angles[i] += new_angles[i];
+        planner->angles_ideal[i] += planner->angles_step[i];
         
         // Set the bits for the stepper mover
-        if (fabs(new_angles[i] - actual_angles[i]) >= STEPPER_STEP_SIZE) {
+        if (fabs(planner->angles_ideal[i] - planner->angles_actual[i]) >= STEPPER_STEP_SIZE) {
             make_step |= 1 << i;
-            direction |= (new_angles[i] > actual_angles[i]) << i;
+            direction |= (planner->angles_ideal[i] > planner->angles_actual[i]) << i;
         }
     }
 
@@ -188,17 +183,42 @@ Status take_step() {
         pc.printf("FFFUUUUU Stepper failure\r\n");
         return FAILURE;
     }
-        
-    fwd_kinematics(&cur_pos, ideal_angles);
-
-    prev_dist = dist_between(cur_pos, goal);
-    
-    timer.stop();
-    //pc.printf("Timer: %d\r\n", timer.read_us());
-    pc.printf("position: %f %f %f\r\n", cur_pos.x, cur_pos.y, cur_pos.z);
-    pc.printf("dist: %f\r\n", prev_dist);
-    pc.printf("angles: %f %f %f\r\n", ideal_angles[0], ideal_angles[1], ideal_angles[2]);
-    pc.printf("aangles: %f %f %f\r\n", actual_angles[0], actual_angles[1], actual_angles[2]);
-
+    planner->steps_to_next--;
     return SUCCESS;
+}
+
+Timer timer;
+void take_step() {
+    //pc.printf("goal: %f %f %f\r\n", goal.x, goal.y, goal.z);
+    timer.reset();
+    timer.start();
+	if (cur_plan->steps_to_next == 0) {
+		if (cur_plan->buf_ind == cur_plan->buf_next) {
+			cur_plan->finished = true;
+			return;
+		}
+		while (get_next_steps(cur_plan) == END_PAT) {
+		    cur_plan->buf_ind = INC_ONE(cur_plan->buf_ind);
+		    if (cur_plan->buf_ind == cur_plan->buf_next) {
+		        cur_plan->finished = true;
+		        return;
+		    }
+		}
+	}
+	make_next_step(cur_plan);
+	if (cur_plan->steps_to_next == 0) {
+		if (cur_plan->buf_ind == cur_plan->buf_next) {
+			cur_plan->finished = true;
+			return;
+		}
+		while (get_next_steps(cur_plan) == END_PAT) {
+		    cur_plan->buf_ind = INC_ONE(cur_plan->buf_ind);
+		    if (cur_plan->buf_ind == cur_plan->buf_next) {
+		        cur_plan->finished = true;
+		        return;
+		    }
+		}
+	}
+    timer.stop();
+    pc.printf("Timer: %d\r\n", timer.read_us());
 }

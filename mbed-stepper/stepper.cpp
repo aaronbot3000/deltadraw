@@ -9,12 +9,6 @@ static const F32 p_offset[3] = {0, 0, 0};
 static const F32 p_mult[3] = {1, 1, 1};
 static const S32 samples = 6;
 
-void reset_steppers() {
-    angles[0] = 0;
-    angles[1] = 0;
-    angles[2] = 0;
-}
-
 void update_pos() {
     int i;
     S32 ext[3][samples];
@@ -40,7 +34,7 @@ Status move_steppers(int steppers, int direction) {
     Status retcode = SUCCESS;
     //pc.printf("stepper code: %d %d\r\n", steppers, direction);
     for (int i = 0; i < 3; i++) {
-        // Step up
+        // Step to larger angle (down)
         if ((direction >> i) & STEPPER_UP) {
             if (angles[i] > STEPPER_MAX_ANGLE) {
                 retcode = FAILURE;
@@ -51,7 +45,7 @@ Status move_steppers(int steppers, int direction) {
                 angles[i] += STEPPER_STEP_SIZE;
             }
         }
-        // Step down
+        // Step to smaller angle (up)
         else if ((steppers >> i) & 0x1) {
             if (angles[i] < STEPPER_MIN_ANGLE) {
                 retcode = FAILURE;

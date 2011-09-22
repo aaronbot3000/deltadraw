@@ -1,6 +1,6 @@
 #include "patterns.h"
 
-int draw_star(F32 moves_z, F32 draw_z, Point* buffer) {
+int draw_star(F32 moves_z, F32 draw_z, Planner* planner) {
     Point a, b, c, d, e, g;
     g.x =  0;
     g.y =  2;
@@ -21,18 +21,18 @@ int draw_star(F32 moves_z, F32 draw_z, Point* buffer) {
     e.y = -2;
     e.z = draw_z;
     int index = 0;
-    buffer[index++] = g;
-    buffer[index++] = a;
-    buffer[index++] = b;
-    buffer[index++] = c;
-    buffer[index++] = d;
-    buffer[index++] = e;
-    buffer[index++] = a;
-    buffer[index++] = g;
+    add_point_to_buffer(planner, g);
+    add_point_to_buffer(planner, a);
+    add_point_to_buffer(planner, b);
+    add_point_to_buffer(planner, c);
+    add_point_to_buffer(planner, d);
+    add_point_to_buffer(planner, e);
+    add_point_to_buffer(planner, a);
+    add_point_to_buffer(planner, g);
     return index;
 }
 
-int draw_square_large(F32 moves_z, F32 draw_z, Point* buffer) {
+int draw_square_large(F32 moves_z, F32 draw_z, Planner* planner) {
     int index = 0;
     Point a, b, c, d, g;
     g.x =  0;
@@ -51,17 +51,17 @@ int draw_square_large(F32 moves_z, F32 draw_z, Point* buffer) {
     d.y =  0;
     d.z = draw_z;
 
-    buffer[index++] = g;
-    buffer[index++] = a;
-    buffer[index++] = b;
-    buffer[index++] = c;
-    buffer[index++] = d;
-    buffer[index++] = a;
-    buffer[index++] = g;
+    add_point_to_buffer(planner, g);
+    add_point_to_buffer(planner, a);
+    add_point_to_buffer(planner, b);
+    add_point_to_buffer(planner, c);
+    add_point_to_buffer(planner, d);
+    add_point_to_buffer(planner, a);
+    add_point_to_buffer(planner, g);
     return index;
 }
 
-int draw_square_nn(F32 moves_z, F32 draw_z, Point* buffer) {
+int draw_square_nn(F32 moves_z, F32 draw_z, Planner* planner) {
     int index = 0;
     Point a, b, c, d, g;
     g.x = -3;
@@ -80,127 +80,127 @@ int draw_square_nn(F32 moves_z, F32 draw_z, Point* buffer) {
     d.y = -1;
     d.z = draw_z;
 
-    buffer[index++] = g;
-    buffer[index++] = a;
-    buffer[index++] = b;
-    buffer[index++] = c;
-    buffer[index++] = d;
-    buffer[index++] = a;
-    buffer[index++] = g;
+    add_point_to_buffer(planner, g);
+    add_point_to_buffer(planner, a);
+    add_point_to_buffer(planner, b);
+    add_point_to_buffer(planner, c);
+    add_point_to_buffer(planner, d);
+    add_point_to_buffer(planner, a);
+    add_point_to_buffer(planner, g);
     return index;
 }
 
-int draw_ti(F32 moves_height, F32 draw_height, Point off, Point* buffer){
+int draw_ti(F32 moves_height, F32 draw_height, Point off, Planner* planner){
     int index = 0;
     Point a;
     // H
     a.x = 0; a.y = 0; a.z = moves_height;
     a.x += off.x; a.y += off.y;
-    buffer[index++] = a;
+    add_point_to_buffer(planner, a);
     a.x = 0; a.y = 0; a.z = draw_height;
     a.x += off.x; a.y += off.y;
-    buffer[index++] = a;
+    add_point_to_buffer(planner, a);
     a.x = 0; a.y = 2; a.z = draw_height;
     a.x += off.x; a.y += off.y;
-    buffer[index++] = a;
+    add_point_to_buffer(planner, a);
     a.x = 0; a.y = 2; a.z = moves_height;
     a.x += off.x; a.y += off.y;
-    buffer[index++] = a;
+    add_point_to_buffer(planner, a);
     a.x = 0; a.y = 1; a.z = moves_height;
     a.x += off.x; a.y += off.y;
-    buffer[index++] = a;
+    add_point_to_buffer(planner, a);
     a.x = 0; a.y = 1; a.z = draw_height;
     a.x += off.x; a.y += off.y;
-    buffer[index++] = a;
+    add_point_to_buffer(planner, a);
     a.x = 0.5; a.y = 1; a.z = draw_height;
     a.x += off.x; a.y += off.y;
-    buffer[index++] = a;
+    add_point_to_buffer(planner, a);
     a.x = 0.5; a.y = 1; a.z = moves_height;
     a.x += off.x; a.y += off.y;
-    buffer[index++] = a;
+    add_point_to_buffer(planner, a);
     a.x = 0.5; a.y = 2; a.z = moves_height;
     a.x += off.x; a.y += off.y;
-    buffer[index++] = a;
+    add_point_to_buffer(planner, a);
     a.x = 0.5; a.y = 2; a.z = draw_height;
     a.x += off.x; a.y += off.y;
-    buffer[index++] = a;
+    add_point_to_buffer(planner, a);
     a.x = 0.5; a.y = 0; a.z = draw_height;
     a.x += off.x; a.y += off.y;
-    buffer[index++] = a;
+    add_point_to_buffer(planner, a);
     a.x = 0.5; a.y = 0; a.z = moves_height;
     a.x += off.x; a.y += off.y;
-    buffer[index++] = a;
+    add_point_to_buffer(planner, a);
     
     // I
     a.x = 0.75; a.y = 2; a.z = moves_height;
     a.x += off.x; a.y += off.y;
-    buffer[index++] = a;
+    add_point_to_buffer(planner, a);
     a.x = 0.75; a.y = 2; a.z = draw_height;
     a.x += off.x; a.y += off.y;
-    buffer[index++] = a;
+    add_point_to_buffer(planner, a);
     a.x = 0.75; a.y = 1.5; a.z = draw_height;
     a.x += off.x; a.y += off.y;
-    buffer[index++] = a;
+    add_point_to_buffer(planner, a);
     a.x = 0.75; a.y = 1.5; a.z = moves_height;
     a.x += off.x; a.y += off.y;
-    buffer[index++] = a;
+    add_point_to_buffer(planner, a);
     a.x = 0.75; a.y = 1; a.z = moves_height;
     a.x += off.x; a.y += off.y;
-    buffer[index++] = a;
+    add_point_to_buffer(planner, a);
     a.x = 0.75; a.y = 1; a.z = draw_height;
     a.x += off.x; a.y += off.y;
-    buffer[index++] = a;
+    add_point_to_buffer(planner, a);
     a.x = 0.75; a.y = 0; a.z = draw_height;
     a.x += off.x; a.y += off.y;
-    buffer[index++] = a;
+    add_point_to_buffer(planner, a);
     a.x = 0.75; a.y = 0; a.z = moves_height;
     a.x += off.x; a.y += off.y;
-    buffer[index++] = a;
+    add_point_to_buffer(planner, a);
     
     // T
     a.x = 1.5; a.y = 2; a.z = moves_height;
     a.x += off.x; a.y += off.y;
-    buffer[index++] = a;
+    add_point_to_buffer(planner, a);
     a.x = 1.5; a.y = 2; a.z = draw_height;
     a.x += off.x; a.y += off.y;
-    buffer[index++] = a;
+    add_point_to_buffer(planner, a);
     a.x = 2; a.y = 2; a.z = draw_height;
     a.x += off.x; a.y += off.y;
-    buffer[index++] = a;
+    add_point_to_buffer(planner, a);
     a.x = 1.75; a.y = 2; a.z = draw_height;
     a.x += off.x; a.y += off.y;
-    buffer[index++] = a;
+    add_point_to_buffer(planner, a);
     a.x = 1.75; a.y = 0; a.z = draw_height;
     a.x += off.x; a.y += off.y;
-    buffer[index++] = a;
+    add_point_to_buffer(planner, a);
     a.x = 1.75; a.y = 0; a.z = moves_height;
     a.x += off.x; a.y += off.y;
-    buffer[index++] = a;
+    add_point_to_buffer(planner, a);
     
     // I
     a.x = 2.25; a.y = 0; a.z = moves_height;
     a.x += off.x; a.y += off.y;
-    buffer[index++] = a;
+    add_point_to_buffer(planner, a);
     a.x = 2.25; a.y = 0; a.z = draw_height;
     a.x += off.x; a.y += off.y;
-    buffer[index++] = a;
+    add_point_to_buffer(planner, a);
     a.x = 2.75; a.y = 0; a.z = draw_height;
     a.x += off.x; a.y += off.y;
-    buffer[index++] = a;
+    add_point_to_buffer(planner, a);
     a.x = 2.5; a.y = 0; a.z = draw_height;
     a.x += off.x; a.y += off.y;
-    buffer[index++] = a;
+    add_point_to_buffer(planner, a);
     a.x = 2.5; a.y = 2; a.z = draw_height;
     a.x += off.x; a.y += off.y;
-    buffer[index++] = a;
+    add_point_to_buffer(planner, a);
     a.x = 2.25; a.y = 2; a.z = draw_height;
     a.x += off.x; a.y += off.y;
-    buffer[index++] = a;
+    add_point_to_buffer(planner, a);
     a.x = 2.75; a.y = 2; a.z = draw_height;
     a.x += off.x; a.y += off.y;
-    buffer[index++] = a;
+    add_point_to_buffer(planner, a);
     a.x = 2.75; a.y = 2; a.z = moves_height;
     a.x += off.x; a.y += off.y;
-    buffer[index++] = a;
+    add_point_to_buffer(planner, a);
     return index;
 }

@@ -1,6 +1,7 @@
 #ifndef KINEMATICS_H
 #define KINEMATICS_H
 
+#include "mbed.h"
 #include "common.h"
 
 #define COS_30   0.866025404
