@@ -3,19 +3,19 @@
 
 #include "mbed.h"
  
-#define ARM_UPPER_LEN 2.489
-#define ARM_LOWER_LEN 10.546875
+#define ARM_UPPER_LEN 2.75
+#define ARM_LOWER_LEN 12.71875
 
 #define HAND_XOFF  1.09725
 #define HAND_ZOFF -0.20975
 
 #define TOOL_ZOFF -1.78000
 
-#define SERVO_XOFF -2.2085
-#define SERVO_ZOFF  0.51
+#define SERVO_XOFF -4.0096
+#define SERVO_ZOFF  0.7087
 
-#define MAX_Z 11.5
-#define MIN_Z 10.15
+#define MAX_Z 13
+#define MIN_Z 10
 
 #define MAX_X  3.1
 #define MIN_X -3.1
@@ -35,7 +35,8 @@
 typedef enum {
     SUCCESS,
     FAILURE,
-    END_PAT
+    END_PAT,
+    RUN_MORE
 } Status;
 
 typedef unsigned char  U08;
@@ -62,23 +63,6 @@ struct Point {
         z = rhs.z;
         return *this;
     }
-    
-    /*
-    Point& operator=(Point &rhs) {
-        x = rhs.x;
-        y = rhs.y;
-        z = rhs.z;
-        return *this;
-    }
-    */
-    
-    /*
-    Point(const Point& in) {
-        x = in.x;
-        y = in.y;
-        z = in.z;
-    }
-    */
     
     Point(volatile Point& in) {
         x = in.x;

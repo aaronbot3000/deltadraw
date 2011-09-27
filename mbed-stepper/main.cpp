@@ -18,7 +18,7 @@ DigitalOut led4(LED4);
 volatile U08 serial_buffer[16];
 volatile S32 sbuffer_index;
 
-static F32 draw_z = MIN_Z; // inches
+static F32 draw_z = 11; // inches
 
 Planner planner;
 
@@ -39,11 +39,13 @@ void setup() {
 Status wait_for_pattern() {
     while (true) {
         if (planner.finished) {
-			return SUCCESS;
+            return SUCCESS;
         }
-		if (planner.errored) {
-			return FAILURE;
-		}
+        if (planner.errored) {
+            pc.printf("FAILURE");
+            led2 = 1;
+            return FAILURE;
+        }
     }
 }
 
@@ -67,8 +69,8 @@ Status fill_buffer() {
             in.z = moves_z;
         else
             in.z = draw_z;
-		
-		add_point_to_buffer(&planner, in);
+        
+        add_point_to_buffer(&planner, in);
     }
     resume_steppers(&planner);
     
@@ -97,8 +99,10 @@ int main() {
     */
     
     while (true) {
+        pause_steppers(&planner);
         pc.printf("starting pattern\r\n");
         draw_square_large(moves_z, draw_z, &planner);
+        resume_steppers(&planner);
         wait_for_pattern();
     }
     
