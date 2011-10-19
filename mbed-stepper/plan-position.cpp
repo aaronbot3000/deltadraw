@@ -1,6 +1,6 @@
 #include "plan-position.h"
 
-extern Serial pc;
+//extern Serial pc;
 extern DigitalOut led1;
 extern DigitalOut led2;
 extern DigitalOut led4;
@@ -33,8 +33,22 @@ F32 max(F32 a, F32 b, F32 c) {
     }
 }
 
+Status wait_for_pattern(Planner* planner) {
+    while (true) {
+        if (planner->finished) {
+            return SUCCESS;
+        }
+        if (planner->errored) {
+            //pc.printf("FAILURE");
+            led2 = 1;
+            return FAILURE;
+        }
+    }
+}
+
 void setup_planner(Planner* planner) {
     update_pos();
+    
     planner->angles_actual = get_angles();
     
     planner->buf_ind = 0;
@@ -47,25 +61,28 @@ void setup_planner(Planner* planner) {
     planner->buffer[0].z = START_Z;
     
     planner->current_pos.x = 0;
-    planner->current_pos.y = .1;
-    planner->current_pos.z = START_Z;
+    planner->current_pos.y = 0;
+    planner->current_pos.z = START_Z + 0.01;
 
     cur_plan = planner;
 
     planner->finished = false;
     planner->errored = false;
 
-    planner->runner.attach_us(take_step, TIMING_INTERVAL);
+    resume_steppers(planner);
     planner->state = PLR_ACCL;
 }
 
 bool add_point_to_buffer(Planner* planner, Point in) {
     if (INC_ONE(planner->buf_next) == planner->buf_ind)
         return false;
+        
     planner->buffer[planner->buf_next].x = in.x;
     planner->buffer[planner->buf_next].y = in.y;
     planner->buffer[planner->buf_next].z = in.z;
+    
     planner->buf_next = INC_ONE(planner->buf_next);
+    
     planner->finished = false;
     return true;
 }
@@ -81,6 +98,11 @@ void resume_steppers(Planner* planner) {
 Status get_next_steps(Planner* planner, bool reset_dist_flag) {
     Point goal = planner->buffer[planner->buf_ind];
     Point cur_pos = planner->current_pos;
+    
+    /*
+    pc.printf("goal: %f %f %f\r\n", goal.x, goal.y, goal.z);
+    pc.printf("curr: %f %f %f\r\n", cur_pos.x, cur_pos.y, cur_pos.z);
+    */
 
     conform_goal(&goal);
 
@@ -95,7 +117,9 @@ Status get_next_steps(Planner* planner, bool reset_dist_flag) {
     if (reset_dist_flag) {
         planner->full_dist = dist;
         planner->prev_dist = dist;
+        pause_steppers(planner);
         //update_pos();
+        resume_steppers(planner);
         for (int i = 0; i < 3; i++)
             planner->angles_ideal[i] = planner->angles_actual[i];
     }
@@ -104,8 +128,9 @@ Status get_next_steps(Planner* planner, bool reset_dist_flag) {
 
     F32 new_angles[3];
 
-    if (dist < MIN_DIST)
+    if (dist < MIN_DIST) {
         return END_PAT;
+    }
 
     // Inverse square root!!!
     F32 inv_vec_mag = 1 / dist;
@@ -123,7 +148,8 @@ Status get_next_steps(Planner* planner, bool reset_dist_flag) {
             planner->state = PLR_DECL;
 
         else
-            step = MAP(full_dist - prev_dist, 0, ACCL_ZONE, MIN_STEP_SIZE, MAX_STEP_SIZE);
+            //step = MAPEXP(full_dist - prev_dist, 0, ACCL_ZONE, MAX_STEP_SIZE, MIN_STEP_FRAC);
+            step = MAP(fabs(full_dist - prev_dist), 0, ACCL_ZONE, MIN_STEP_SIZE, MAX_STEP_SIZE);
     }
     if (planner->state == PLR_FULL) {
         if (prev_dist < ACCL_ZONE)
@@ -134,6 +160,7 @@ Status get_next_steps(Planner* planner, bool reset_dist_flag) {
     }
     if (planner->state == PLR_DECL) {
         Point test;
+        //step = MAPEXP(ACCL_ZONE - (prev_dist), 0, ACCL_ZONE, MAX_STEP_SIZE, MIN_STEP_FRAC);
         step = MAP(prev_dist, 0, ACCL_ZONE, MIN_STEP_SIZE, MAX_STEP_SIZE);
 
         test.x = cur_pos.x + dx * step;
@@ -165,7 +192,10 @@ Status get_next_steps(Planner* planner, bool reset_dist_flag) {
         return FAILURE;
     }
     
-    //pc.printf("newangles: %f %f %f\r\n", new_angles[0], new_angles[1], new_angles[2]);
+    /*
+    pc.printf("actaangles: %f %f %f\r\n", planner->angles_actual[0], planner->angles_actual[1], planner->angles_actual[2]);
+    pc.printf("newangles: %f %f %f\r\n", new_angles[0], new_angles[1], new_angles[2]);
+    */
 
     // Get the difference in angles
     for (int i = 0; i < 3; i++) {
@@ -215,10 +245,13 @@ Status make_next_step(Planner* planner) {
     }
     
     if (move_steppers(make_step, direction) != SUCCESS) {
+    /*
         pc.printf("FFFUUUUU Stepper failure\r\n");
         pc.printf("anglesa: %f %f %f\r\n", planner->angles_actual[0], planner->angles_actual[1], planner->angles_actual[2]);
         pc.printf("anglesi: %f %f %f\r\n", planner->angles_ideal[0], planner->angles_ideal[1], planner->angles_ideal[2]);
         pc.printf("position: %f %f %f\r\n", planner->current_pos.x, planner->current_pos.y, planner->current_pos.z);
+        */
+        led2 = 1;
         return FAILURE;
     }
     planner->steps_to_next--;
@@ -229,8 +262,13 @@ Timer timer;
 void take_step() {
     bool reset_dist_flag;
     static bool firstrun = true;
-    //timer.reset();
-    //timer.start();
+    
+    static int counter = 0;
+    if (counter++ > 200) {
+        led4 = led4 ^ 1;
+        counter = 0;
+    }
+    
     led1 = 0;
     make_next_step(cur_plan);
     if (cur_plan->steps_to_next == 0) {
@@ -238,20 +276,24 @@ void take_step() {
             cur_plan->finished = true;
             return;
         }
+        
         reset_dist_flag = 0;
         if (firstrun) {
             firstrun = false;
             reset_dist_flag = 1;
             cur_plan->buf_ind = INC_ONE(cur_plan->buf_ind);
         }
+        
         while (get_next_steps(cur_plan, reset_dist_flag) == END_PAT) {
             led1 = 1;
             reset_dist_flag = 1;
-            cur_plan->buf_ind = INC_ONE(cur_plan->buf_ind);
-            if (cur_plan->buf_ind == cur_plan->buf_next) {
+           
+            if (INC_ONE(cur_plan->buf_ind) == cur_plan->buf_next) {
                 cur_plan->finished = true;
+                led1 = 0;
                 return;
             }
+            cur_plan->buf_ind = INC_ONE(cur_plan->buf_ind);
         }
     }
     //timer.stop();

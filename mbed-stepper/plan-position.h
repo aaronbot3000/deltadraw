@@ -9,14 +9,16 @@
 #define BUFFER_SIZE 256
 #define INC_ONE(a) (((a) + 1) % BUFFER_SIZE)
 
-#define MAX_STEP_SIZE   0.1
-#define MIN_STEP_SIZE   0.0001
+#define MAX_STEP_SIZE   0.040
+#define MIN_STEP_SIZE   0.001
+#define MIN_STEP_FRAC   3
 
-#define MIN_DIST 0.02
 
-#define ACCL_ZONE 1.5 // inches
+#define MIN_DIST 0.002
 
-#define TIMING_INTERVAL 700
+#define ACCL_ZONE 0.5 // inches
+
+#define TIMING_INTERVAL 2500
 
 enum Planner_State {
     PLR_ACCL,
@@ -27,13 +29,15 @@ enum Planner_State {
 };
 
 struct Planner {
-    Ticker runner;
     volatile Point buffer[BUFFER_SIZE];
-    volatile S32 buf_ind;
-    volatile S32 buf_next;
+    volatile U32 buf_ind;
+    volatile U32 buf_next;
 
     Planner_State state;
     S32 steps_to_next;
+    
+    Ticker runner;
+    
     F32 angles_step[3];
     F32* angles_actual;
     F32 angles_ideal[3];
@@ -46,6 +50,8 @@ struct Planner {
     volatile bool errored;
 };
 
+void go_to_home(Planner* planner);
+Status wait_for_pattern(Planner* planner);
 void setup_planner(Planner* planner);
 bool add_point_to_buffer(Planner* planner, Point in);
 void pause_steppers(Planner* planner);

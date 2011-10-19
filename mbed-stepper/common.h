@@ -2,9 +2,10 @@
 #define COMMON_H
 
 #include "mbed.h"
+#include "math.h"
  
 #define ARM_UPPER_LEN 2.75
-#define ARM_LOWER_LEN 12.71875
+#define ARM_LOWER_LEN 11.71875
 
 #define HAND_XOFF  1.09725
 #define HAND_ZOFF -0.20975
@@ -15,7 +16,7 @@
 #define SERVO_ZOFF  0.7087
 
 #define MAX_Z 13
-#define MIN_Z 10
+#define MIN_Z 7.9
 
 #define MAX_X  3.1
 #define MIN_X -3.1
@@ -23,12 +24,15 @@
 #define MAX_Y  3.1
 #define MIN_Y -3.1
 
-#define START_Z (MIN_Z - 0.5)
+#define START_Z (MIN_Z + 0.1)
 
 #define MAX(a, b) ((a) > (b) ? (a) : (b))
 #define MIN(a, b) ((a) < (b) ? (a) : (b))
+
 #define RESTRICT(a, b1, b2) (MIN(b2, MAX(a, b1)))
+
 #define MAP(a, b1, b2, x1, x2) (((F32)((a) - (b1)) / (F32)((b2) - (b1))) * ((x2) - (x1)) + (x1)) 
+#define MAPEXP(a, b1, b2, x1, x2) (x1 * pow((float)1.5, -(((F32)((a) - (b1)) / (F32)((b2) - (b1))) * x2)))
 
 #define DEBUG
 
@@ -72,6 +76,12 @@ struct Point {
     
     Point() {
         x = y = z = 0;
+    }
+    
+    Point(F32 a, F32 b, F32 c) {
+        x = a;
+        y = b;
+        z = c;
     }
 };
 

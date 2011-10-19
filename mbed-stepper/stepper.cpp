@@ -1,8 +1,8 @@
 #include "stepper.h"
 
-static DigitalOut stepper[] = {DigitalOut(p10), DigitalOut(p11), DigitalOut(p12)};
-static DigitalOut dir[] = {DigitalOut(p13), DigitalOut(p14), DigitalOut(p15)};
-static AnalogIn posIn[] = {AnalogIn(p18), AnalogIn(p19), AnalogIn(p20)};
+static DigitalOut dir[] = {DigitalOut(p23), DigitalOut(p22), DigitalOut(p21)};
+static DigitalOut stepper[] = {DigitalOut(p26), DigitalOut(p25), DigitalOut(p24)};
+static AnalogIn posIn[] = {AnalogIn(p18), AnalogIn(p17), AnalogIn(p20)};
 
 extern DigitalOut led1;
 extern DigitalOut led2;
@@ -12,28 +12,41 @@ extern DigitalOut led4;
 static F32 angles[3];
 
 /*
-1:
--.1184589 -> 36930
-1.4523373 -> 14880
-mult = 0.00007123792865
-2:
--.1184589 -> 40450
-1.4523373 -> 15730
-mult = 0.00006354354072
-3:
--.1184589 -> 41800
-1.4523373 -> 17600
-mult = 0.00006490893912
+level top: -.1184589 rad
+1: 25250
+2: 23965
+3: 28536
+
+vertical top, down: 1.452337 rad
+1: 49868
+2: 48211
+3: 51076
+
+angle:
+13.5744 deg or 6.7872 deg
+
+scaling factor: for pi/2 rad
+1: 0.00006380682
+2: 0.00006478579
+3: 0.00006968927
+
+offset to zero:
+1: -1.729581105
+2: -1.671050457
+3: -2.107112009
 */
 
-static const F32 p_offset = -0.1184589;
-static const F32 p_ref[3] = {36930, 40450, 41800};
-static const F32 p_mult[3] = {0.00007123792865, 0.00006354354072, 0.00006490893912};
-static const S32 samples = 6;
+
+static const float p_ref[3] = {-1.729581105, -1.671050457, -2.107112009};
+static const float p_mult[3] = {0.00006380682, 0.00006478579, 0.00006968927};
+static const S32 samples = 24;
 
 void update_pos() {
     int i;
     S32 ext[3][samples];
+    
+    // Wait for LPF to settle
+    wait_us(1000);
     for (int x = 0; x < 3; x++) {
         for (int j = 1; j < samples; j++) {
             ext[x][j] = posIn[x].read_u16();
@@ -42,9 +55,12 @@ void update_pos() {
                 ext[x][i] = ext[x][i-1];
             }
             ext[x][i] = index;
+            wait_us(1);
         }
-        angles[x] = (ext[x][samples / 2 - 1] + ext[x][samples / 2]) / 2;
-        angles[x] = (p_ref[x] - angles[x]) * p_mult[x] + p_offset;
+        for (int i = 8; i < 16; i++)
+            angles[x] += ext[x][i];
+        angles[x] /= 8;
+        angles[x] = angles[x] * p_mult[x] + p_ref[x];
     }
 }
 

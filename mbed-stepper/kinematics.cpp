@@ -12,7 +12,7 @@ inline F32 r2(F32 in) {
     return in * in;
 }
 
-extern Serial pc;
+//extern Serial pc;
 
 Status inv_kinematics(F32* result, Point target) {
     F32 dist, inv_dist, alpha;
@@ -47,7 +47,7 @@ Status inv_kinematics(F32* result, Point target) {
         // Bounds checking
         if (dist > (ARM_UPPER_LEN + lower_radius) || 
                 dist < (lower_radius - ARM_UPPER_LEN)) {
-            pc.printf("OH FFFFFFUUUUUUUU Inv Failure %.5f, %.5f, %.5f\r\n", dist, ARM_UPPER_LEN, lower_radius);
+            //pc.printf("OH FFFFFFUUUUUUUU Inv Failure %.5f, %.5f, %.5f\r\n", dist, ARM_UPPER_LEN, lower_radius);
             //led2 = 1;
             return FAILURE;
         }
