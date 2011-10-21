@@ -10,7 +10,7 @@
 #define INC_ONE(a) (((a) + 1) % BUFFER_SIZE)
 
 #define MAX_STEP_SIZE   0.040
-#define MIN_STEP_SIZE   0.001
+#define MIN_STEP_SIZE   0.0005
 #define MIN_STEP_FRAC   3
 
 

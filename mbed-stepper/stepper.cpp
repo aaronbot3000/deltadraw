@@ -36,8 +36,8 @@ offset to zero:
 3: -2.107112009
 */
 
-
-static const float p_ref[3] = {-1.729581105, -1.671050457, -2.107112009};
+// tic const float p_ref[3] = {-1.729581105, -1.671050457, -2.107112009};
+static const float p_ref[3] = {-1.729581105, -1.671050457, -2.007112009};
 static const float p_mult[3] = {0.00006380682, 0.00006478579, 0.00006968927};
 static const S32 samples = 24;
 
@@ -46,7 +46,7 @@ void update_pos() {
     S32 ext[3][samples];
     
     // Wait for LPF to settle
-    wait_us(1000);
+    wait_ms(10);
     for (int x = 0; x < 3; x++) {
         for (int j = 1; j < samples; j++) {
             ext[x][j] = posIn[x].read_u16();
@@ -55,7 +55,7 @@ void update_pos() {
                 ext[x][i] = ext[x][i-1];
             }
             ext[x][i] = index;
-            wait_us(1);
+            wait_us(100);
         }
         for (int i = 8; i < 16; i++)
             angles[x] += ext[x][i];

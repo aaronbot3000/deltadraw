@@ -91,7 +91,7 @@ Status fill_buffer() {
         }
     }
     led3 = 0;
-    update_pos();
+    //update_pos();
     resume_steppers(&planner);
     
     return SUCCESS;
@@ -101,13 +101,13 @@ void adj_z() {
     Point next_pos = planner.current_pos;
     if (troll_up && draw_z > (MIN_Z + 0.6)) {
         //pc.printf("up\r\n");
-        draw_z -= 0.1; 
+        draw_z -= 0.03; 
         next_pos.z = draw_z;
         add_point_to_buffer(&planner, next_pos);
     }
     else if (troll_down && draw_z < (MAX_Z)) {
         //pc.printf("down\r\n");
-        draw_z += 0.1; 
+        draw_z += 0.03; 
         next_pos.z = draw_z;
         add_point_to_buffer(&planner, next_pos);
     }
