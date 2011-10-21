@@ -76,7 +76,9 @@ Status fill_buffer() {
             return END_PAT;
         }
         sbuffer_index = 0;
-        pc.putc(START_TRANS);
+        
+        if (i < BUFFER_SIZE - 3)
+            pc.putc(START_TRANS);
         
         in.x = *(F32*)(&serial_buffer[0]);
         in.y = *(F32*)(&serial_buffer[4]);
@@ -90,6 +92,8 @@ Status fill_buffer() {
             led2 = 1;
         }
     }
+    
+    //wait_ms(2000);
     led3 = 0;
     //update_pos();
     resume_steppers(&planner);

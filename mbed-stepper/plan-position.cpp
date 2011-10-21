@@ -7,6 +7,8 @@ extern DigitalOut led4;
 
 static Planner* cur_plan;
 
+Status get_next_steps(Planner* planner, bool reset_dist_flag);
+
 F32 dist_between(Point a, Point b) {
     return sqrt((a.x - b.x) * (a.x - b.x) + (a.y - b.y) * (a.y - b.y) + (a.z - b.z) * (a.z - b.z));
 }
@@ -68,6 +70,8 @@ void setup_planner(Planner* planner) {
 
     planner->finished = false;
     planner->errored = false;
+    
+    get_next_steps(planner, 1);
 
     resume_steppers(planner);
     planner->state = PLR_ACCL;
@@ -261,7 +265,6 @@ Status make_next_step(Planner* planner) {
 Timer timer;
 void take_step() {
     bool reset_dist_flag;
-    static bool firstrun = true;
     
     static int counter = 0;
     if (counter++ > 200) {
@@ -272,17 +275,8 @@ void take_step() {
     led1 = 0;
     make_next_step(cur_plan);
     if (cur_plan->steps_to_next == 0) {
-        if (cur_plan->buf_ind == cur_plan->buf_next) {
-            cur_plan->finished = true;
-            return;
-        }
         
         reset_dist_flag = 0;
-        if (firstrun) {
-            firstrun = false;
-            reset_dist_flag = 1;
-            cur_plan->buf_ind = INC_ONE(cur_plan->buf_ind);
-        }
         
         while (get_next_steps(cur_plan, reset_dist_flag) == END_PAT) {
             led1 = 1;

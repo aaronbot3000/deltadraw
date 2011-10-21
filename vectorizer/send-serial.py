@@ -15,11 +15,11 @@ INPUT = 'test4.jpg'
 #INPUT = 'test_pattern.jpg'
 RES_X = 160
 
-MAX_X =  3
-MIN_X = -3
+MAX_X =  3.75
+MIN_X = -3.75
 
-MAX_Y =  3
-MIN_Y = -3
+MAX_Y =  3.75
+MIN_Y = -3.75
 
 MOVE_POINT  = 1
 DRAW_POINT  = 2
@@ -86,6 +86,11 @@ def main():
             next_y = map_range(point[1], 0, RES_Y, MIN_Y, MAX_Y)
             data = struct.pack('<ffb', next_x, next_y, DRAW_POINT);
             send_wait_ack(data)
+
+		next_x = -map_range(cur_p[0][0], 0, RES_X, MIN_X, MAX_X)
+		next_y = map_range(cur_p[0][1], 0, RES_Y, MIN_Y, MAX_Y)
+		data = struct.pack('<ffb', next_x, next_y, DRAW_POINT);
+		send_wait_ack(data)
 
         next_x = -map_range(cur_p[-1][0], 0, RES_X, MIN_X, MAX_X)
         next_y = map_range(cur_p[-1][1], 0, RES_Y, MIN_Y, MAX_Y)
