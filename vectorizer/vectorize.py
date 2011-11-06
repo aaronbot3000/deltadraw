@@ -20,7 +20,7 @@ class Vectorizer:
         cv.CreateTrackbar('apeture', 'Canny', self.__canny_apeture, 2, self.__canny_apeture_callback)
         cv.CreateTrackbar('lowThreshold',  'Canny', self.__canny_lo, 100, self.__canny_lo_callback)
         cv.CreateTrackbar('highThreshold', 'Canny', self.__canny_hi, 100, self.__canny_hi_callback)
-        cv.CreateTrackbar('poly acc', 'Contours', self.__poly_acc, 500, self.__poly_acc_callback)
+        cv.CreateTrackbar('poly acc', 'Contours', self.__poly_acc, 1000, self.__poly_acc_callback)
 
         self.__load_image(image_name, newX)
         self.__smooth_val_callback(self.__smooth_val)

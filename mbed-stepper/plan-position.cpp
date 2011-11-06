@@ -49,7 +49,7 @@ Status wait_for_pattern(Planner* planner) {
 }
 
 void setup_planner(Planner* planner) {
-    update_pos();
+    calibrate();
     
     planner->angles_actual = get_angles();
     
@@ -61,6 +61,7 @@ void setup_planner(Planner* planner) {
     planner->buffer[0].x = 0;
     planner->buffer[0].y = 0;
     planner->buffer[0].z = START_Z;
+    planner->buffer[0].is_traverse = 1;
     
     planner->current_pos.x = 0;
     planner->current_pos.y = 0;
@@ -84,6 +85,7 @@ bool add_point_to_buffer(Planner* planner, Point in) {
     planner->buffer[planner->buf_next].x = in.x;
     planner->buffer[planner->buf_next].y = in.y;
     planner->buffer[planner->buf_next].z = in.z;
+    planner->buffer[planner->buf_next].is_traverse = in.is_traverse;
     
     planner->buf_next = INC_ONE(planner->buf_next);
     
@@ -101,6 +103,7 @@ void resume_steppers(Planner* planner) {
 
 Status get_next_steps(Planner* planner, bool reset_dist_flag) {
     Point goal = planner->buffer[planner->buf_ind];
+    bool is_traverse = goal.is_traverse;
     Point cur_pos = planner->current_pos;
     
     /*
@@ -122,7 +125,6 @@ Status get_next_steps(Planner* planner, bool reset_dist_flag) {
         planner->full_dist = dist;
         planner->prev_dist = dist;
         pause_steppers(planner);
-        //update_pos();
         resume_steppers(planner);
         for (int i = 0; i < 3; i++)
             planner->angles_ideal[i] = planner->angles_actual[i];
@@ -151,21 +153,30 @@ Status get_next_steps(Planner* planner, bool reset_dist_flag) {
         else if (prev_dist < ACCL_ZONE && prev_dist * 2 < full_dist)
             planner->state = PLR_DECL;
 
-        else
-            //step = MAPEXP(full_dist - prev_dist, 0, ACCL_ZONE, MAX_STEP_SIZE, MIN_STEP_FRAC);
-            step = MAP(fabs(full_dist - prev_dist), 0, ACCL_ZONE, MIN_STEP_SIZE, MAX_STEP_SIZE);
+        else {
+            if (is_traverse)
+                step = MAP(fabs(full_dist - prev_dist), 0, ACCL_ZONE, MIN_STEP_SIZE, MAX_TRAV_SIZE);
+            else
+                step = MAP(fabs(full_dist - prev_dist), 0, ACCL_ZONE, MIN_STEP_SIZE, MAX_STEP_SIZE);
+        }
     }
     if (planner->state == PLR_FULL) {
         if (prev_dist < ACCL_ZONE)
             planner->state = PLR_DECL;
 
-        else
-            step = MAX_STEP_SIZE;
+        else {
+            if (is_traverse)
+                step = MAX_TRAV_SIZE;
+            else
+                step = MAX_STEP_SIZE;
+        }
     }
     if (planner->state == PLR_DECL) {
         Point test;
-        //step = MAPEXP(ACCL_ZONE - (prev_dist), 0, ACCL_ZONE, MAX_STEP_SIZE, MIN_STEP_FRAC);
-        step = MAP(prev_dist, 0, ACCL_ZONE, MIN_STEP_SIZE, MAX_STEP_SIZE);
+        if (is_traverse)
+            step = MAP(prev_dist, 0, ACCL_ZONE, MIN_STEP_SIZE, MAX_TRAV_SIZE);
+        else
+            step = MAP(prev_dist, 0, ACCL_ZONE, MIN_STEP_SIZE, MAX_STEP_SIZE);
 
         test.x = cur_pos.x + dx * step;
         test.y = cur_pos.y + dy * step;
@@ -195,7 +206,11 @@ Status get_next_steps(Planner* planner, bool reset_dist_flag) {
         led2 = 1;
         return FAILURE;
     }
-    
+    /*
+    new_angles[0] = -.1184589;
+    new_angles[1] = -.1184589;
+    new_angles[2] = -.1184589;
+    */    
     /*
     pc.printf("actaangles: %f %f %f\r\n", planner->angles_actual[0], planner->angles_actual[1], planner->angles_actual[2]);
     pc.printf("newangles: %f %f %f\r\n", new_angles[0], new_angles[1], new_angles[2]);
@@ -264,7 +279,11 @@ Status make_next_step(Planner* planner) {
 
 Timer timer;
 void take_step() {
-    bool reset_dist_flag;
+#ifdef TIMER_ON
+    Timer t;
+    t.start();
+#endif
+    bool reset_dist_flag, exit_flag = false;
     
     static int counter = 0;
     if (counter++ > 200) {
@@ -274,7 +293,7 @@ void take_step() {
     
     led1 = 0;
     make_next_step(cur_plan);
-    if (cur_plan->steps_to_next == 0) {
+    if (cur_plan->steps_to_next == 0 && !exit_flag) {
         
         reset_dist_flag = 0;
         
@@ -285,11 +304,14 @@ void take_step() {
             if (INC_ONE(cur_plan->buf_ind) == cur_plan->buf_next) {
                 cur_plan->finished = true;
                 led1 = 0;
-                return;
+                exit_flag = true;
+                break;
             }
             cur_plan->buf_ind = INC_ONE(cur_plan->buf_ind);
         }
     }
-    //timer.stop();
-    //pc.printf("Timer: %d\r\n", timer.read_us());
+#ifdef TIMER_ON
+    t.stop();
+    pc.printf("Timer: %d\r\n", t.read_us());
+#endif
 }

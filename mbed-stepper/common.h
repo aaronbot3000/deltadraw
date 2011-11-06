@@ -15,8 +15,8 @@
 #define SERVO_XOFF -4.0096
 #define SERVO_ZOFF  0.7087
 
-#define MAX_Z 13
-#define MIN_Z 7.9
+#define MAX_Z 11
+#define MIN_Z 8.0
 
 #define MAX_X  3.85
 #define MIN_X -3.85
@@ -60,11 +60,13 @@ struct Point {
     F32 x;
     F32 y;
     F32 z;
+    bool is_traverse;
     
     Point& operator=(const Point &rhs) {
         x = rhs.x;
         y = rhs.y;
         z = rhs.z;
+        is_traverse = rhs.is_traverse;
         return *this;
     }
     
@@ -72,6 +74,7 @@ struct Point {
         x = in.x;
         y = in.y;
         z = in.z;
+        is_traverse = in.is_traverse;
     }
     
     Point() {
@@ -82,6 +85,14 @@ struct Point {
         x = a;
         y = b;
         z = c;
+        is_traverse = false;
+    }
+    
+    Point(F32 a, F32 b, F32 c, bool t) {
+        x = a;
+        y = b;
+        z = c;
+        is_traverse = t;
     }
 };
 

@@ -44,7 +44,6 @@ def main():
         print 'Wrong args'
         sys.exit(0)
     
-    serial = Serial(SERIAL_PORT, BAUD)
     vect   = Vectorizer()
     RES_X = int(sys.argv[1])
 
@@ -59,6 +58,7 @@ def main():
 
     print '\nThe image will contain %d points in %d polygons' %(vect.pointc, vect.polyc)
 
+    serial = Serial(SERIAL_PORT, BAUD)
     serial.flushInput();
     serial.flushOutput();
 

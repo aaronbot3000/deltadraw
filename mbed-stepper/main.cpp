@@ -4,7 +4,7 @@
 #include "plan-position.h"
 #include "patterns.h"
 
-#define moves_z (MAX(draw_z - 0.5, MIN_Z - 0.5))
+#define moves_z (MAX(draw_z - 0.25, MIN_Z - 0.25))
 
 #define START_TRANS 'B'
 #define END_TRANS 0xFFFF1111
@@ -83,10 +83,14 @@ Status fill_buffer() {
         in.x = *(F32*)(&serial_buffer[0]);
         in.y = *(F32*)(&serial_buffer[4]);
         
-        if (serial_buffer[8] == 1)
+        if (serial_buffer[8] == 1) {
             in.z = moves_z;
-        else
+            in.is_traverse = true;
+        }
+        else {
             in.z = draw_z;
+            in.is_traverse = false;
+        }
         
         if (!add_point_to_buffer(&planner, in)) {
             led2 = 1;
@@ -103,6 +107,7 @@ Status fill_buffer() {
 
 void adj_z() {
     Point next_pos = planner.current_pos;
+    next_pos.is_traverse = true;
     if (troll_up && draw_z > (MIN_Z + 0.6)) {
         //pc.printf("up\r\n");
         draw_z -= 0.03; 
@@ -125,10 +130,7 @@ void adj_z() {
 }
 
 void reset_pen() {
-    Point a = planner.current_pos;
-    a.x = 0;
-    a.y = 0;
-    a.z = START_Z;
+    Point a(0, 0, START_Z, true);
     add_point_to_buffer(&planner, a);
     
     wait_for_pattern(&planner);
@@ -145,7 +147,7 @@ int main() {
         }
         else if (start_pat) {
             pen_needs_reset = true;
-            update_pos();
+            calibrate();
             //pc.printf("starting pattern\r\n");
             Status status = SUCCESS;
             sbuffer_index = 0;

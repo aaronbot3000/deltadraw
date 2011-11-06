@@ -9,16 +9,28 @@
 #define BUFFER_SIZE 256
 #define INC_ONE(a) (((a) + 1) % BUFFER_SIZE)
 
-#define MAX_STEP_SIZE   0.040
-#define MIN_STEP_SIZE   0.0005
+#define MAX_TRAV_SIZE   0.003
+//#define MAX_STEP_SIZE   0.0006
+//#define MAX_STEP_SIZE   0.001
+#define MAX_STEP_SIZE   0.0005
+//#define MIN_STEP_SIZE   0.00008
+//#define MIN_STEP_SIZE   0.00016
+#define MIN_STEP_SIZE   0.00024
+
 #define MIN_STEP_FRAC   3
 
 
-#define MIN_DIST 0.002
+#define MIN_DIST 0.0005
 
-#define ACCL_ZONE 0.5 // inches
+#define ACCL_ZONE 0.4 // inches
+//#define TIMER_ON
 
-#define TIMING_INTERVAL 2500
+#ifdef TIMER_ON
+#define TIMING_INTERVAL 100000
+#else
+#define TIMING_INTERVAL 200
+#endif
+
 
 enum Planner_State {
     PLR_ACCL,

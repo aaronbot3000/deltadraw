@@ -11,42 +11,31 @@ extern DigitalOut led4;
 
 static F32 angles[3];
 
-/*
-level top: -.1184589 rad
-1: 25250
-2: 23965
-3: 28536
+//extern Serial pc;
 
-vertical top, down: 1.452337 rad
-1: 49868
-2: 48211
-3: 51076
+/*
+45 top: -.90386 rad
+1: 13471
+2: 13729
+3: 16502
 
 angle:
 13.5744 deg or 6.7872 deg
-
-scaling factor: for pi/2 rad
-1: 0.00006380682
-2: 0.00006478579
-3: 0.00006968927
-
-offset to zero:
-1: -1.729581105
-2: -1.671050457
-3: -2.107112009
 */
 
-// tic const float p_ref[3] = {-1.729581105, -1.671050457, -2.107112009};
-static const float p_ref[3] = {-1.729581105, -1.671050457, -2.007112009};
-static const float p_mult[3] = {0.00006380682, 0.00006478579, 0.00006968927};
+static float raw_angles[3];
+static const float calib_angles[3] = {13471, 13729, 16502};
+static const float calib_angle = -0.90386;
+
 static const S32 samples = 24;
 
 void update_pos() {
     int i;
     S32 ext[3][samples];
+    //static int counter = 0;
     
     // Wait for LPF to settle
-    wait_ms(10);
+    wait_us(100);
     for (int x = 0; x < 3; x++) {
         for (int j = 1; j < samples; j++) {
             ext[x][j] = posIn[x].read_u16();
@@ -57,11 +46,16 @@ void update_pos() {
             ext[x][i] = index;
             wait_us(100);
         }
+        raw_angles[x] = 0;
         for (int i = 8; i < 16; i++)
-            angles[x] += ext[x][i];
-        angles[x] /= 8;
-        angles[x] = angles[x] * p_mult[x] + p_ref[x];
+            raw_angles[x] += ext[x][i];
+        
+        raw_angles[x] /= 8;
+        //if (counter == 10)
+          //  pc.printf("rawangles: %f\r\n", raw_angles[x]);
     }
+    //counter= (counter + 1) % 11;
+    //pc.printf("actaangles: %f %f %f\r\n", angles[0], angles[1], angles[2]);
 }
 
 F32* get_angles() {
@@ -111,3 +105,46 @@ Status move_steppers(int steppers, int direction) {
     }
     return retcode;
 }
+
+void calib_arm(int arm_no) {
+    int make_step = 0;
+    while (true) {
+        update_pos();
+        angles[arm_no] = 0;
+        make_step = 0;
+
+        make_step |= (raw_angles[arm_no] > calib_angles[arm_no]) << arm_no;
+        if (!make_step)
+            break;
+    
+        move_steppers(make_step, 0);
+        
+        if (raw_angles[arm_no] - calib_angles[arm_no] > 500) {
+            for (int i = 0; i < 5; i++) {
+                wait_us(300);
+                move_steppers(make_step, 0);
+            }
+        }
+    }
+    angles[arm_no] = calib_angle;
+    for (int i = 0; i < 300; i++) {
+        move_steppers(1 << arm_no, 1 << arm_no);
+        wait_us(400);
+    }
+}
+
+void calibrate() {
+    for (int i = 0; i < 3; i++) {
+        calib_arm(i);
+    }
+}
+        
+        
+        
+        
+        
+        
+        
+        
+        
+        
