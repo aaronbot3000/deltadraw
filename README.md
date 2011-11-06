@@ -3,10 +3,6 @@ Pythagoras, the Drawing Delta Robot
 
 By Aaron Fan
 
-A video of version 1 in action is here: http://www.youtube.com/watch?v=UtbBudzJ5Yo
+A drawing delta robot with edge detecting vectorizing software. Read more at:
 
-Version 2 using stepper motors is here: http://www.youtube.com/watch?v=eZQJMnZ08u8
-
-More infomation pertaining to version 1 here: http://e2e.ti.com/group/msp430launchpad/m/project/447902.aspx
-
-A complete write up nearly done at http://aaronbot3000.blogspot.com/p/pythagoras.html
+http://aaronbot3000.blogspot.com/p/pythagoras.html
