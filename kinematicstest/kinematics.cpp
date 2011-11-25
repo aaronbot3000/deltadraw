@@ -71,13 +71,13 @@ Status fwd_kinematics(Point* target, F32* angles) {
     F32 a1 = ARM_UPPER_LEN * cos(angles[0]) - SERVO_XOFF - HAND_XOFF;
     F32 c1 = ARM_UPPER_LEN * sin(angles[0]) - SERVO_ZOFF - HAND_ZOFF;
 
-	F32 arm2 = (ARM_UPPER_LEN * cos(angles[1]) - SERVO_XOFF - HAND_XOFF);
-    F32 a2 = -arm2 * COS_60;
+	F32 arm2 = ARM_UPPER_LEN * cos(angles[1]);
+    F32 a2 = -(arm2 - SERVO_XOFF - HAND_XOFF) * COS_60;
     F32 b2 = arm2 * SIN_60;
     F32 c2 = ARM_UPPER_LEN * sin(angles[1]) - SERVO_ZOFF - HAND_ZOFF;
 
-	F32 arm3 = (ARM_UPPER_LEN * cos(angles[2]) - SERVO_XOFF - HAND_XOFF);
-    F32 a3 = -arm3 * COS_60;
+	F32 arm3 = ARM_UPPER_LEN * cos(angles[2]);
+    F32 a3 = -(arm3 - SERVO_XOFF - HAND_XOFF) * COS_60;
     F32 b3 = -arm3 * SIN_60;
     F32 c3 = ARM_UPPER_LEN * sin(angles[2]) - SERVO_ZOFF - HAND_ZOFF;
 

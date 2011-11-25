@@ -4,7 +4,6 @@
 #define ARM_UPPER_LEN 2.489
 #define ARM_LOWER_LEN 10.546875
 
-/*
 #define HAND_XOFF  1.09725
 #define HAND_ZOFF -0.20975
 
@@ -12,9 +11,8 @@
 
 #define SERVO_XOFF -2.2085
 #define SERVO_ZOFF  0.51
-*/
 
-
+/*
 #define HAND_XOFF  0
 #define HAND_ZOFF -0
 
@@ -22,6 +20,7 @@
 
 #define SERVO_XOFF -0
 #define SERVO_ZOFF  0
+*/
 
 #define MAX_Z 11.5
 #define MIN_Z 10.15
