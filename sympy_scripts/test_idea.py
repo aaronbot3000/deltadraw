@@ -4,11 +4,15 @@ from __future__ import division
 from sympy import *
 
 t = Symbol('t')
-p1 = (0, 0, 7)
-p2 = (3, 5, 8)
-lx = p1[0] + t * (p2[0] - p1[0])
-ly = p1[1] + t * (p2[1] - p1[1])
-lz = p1[2] + t * (p2[2] - p1[2])
+sx = Symbol('sx')
+sy = Symbol('sy')
+sz = Symbol('sz')
+dx = Symbol('dx')
+dy = Symbol('dy')
+dz = Symbol('dz')
+lx = sx + t * dx
+ly = sy + t * dy
+lz = sz + t * dz
 
 arm_ul = 5
 arm_ll = 7
@@ -31,6 +35,3 @@ z2 =  lx * (h * inv_dist)
 angle = atan2(z1 - z2, x1 - x2)
 
 print (z1 - z2)
-
-for i in range(10):
-	print angle.subs({t: i/10}).evalf()
