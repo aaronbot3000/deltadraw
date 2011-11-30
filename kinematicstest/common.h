@@ -4,23 +4,25 @@
 #define ARM_UPPER_LEN 2.489
 #define ARM_LOWER_LEN 10.546875
 
-#define HAND_XOFF  1.09725
-#define HAND_ZOFF -0.20975
+//#define TESTVAL
 
-#define TOOL_ZOFF -1.78000
+
+#ifndef TESTVAL
+
+#define HAND_XOFF  1.09725
 
 #define SERVO_XOFF -2.2085
 #define SERVO_ZOFF  0.51
 
-/*
-#define HAND_XOFF  0
-#define HAND_ZOFF -0
+#else
 
-#define TOOL_ZOFF -0
+#define HAND_XOFF  0
 
 #define SERVO_XOFF -0
 #define SERVO_ZOFF  0
-*/
+
+#endif
+
 
 #define MAX_Z 11.5
 #define MIN_Z 10.15
@@ -56,7 +58,7 @@ typedef short S16;
 typedef int S32;
 typedef long long S64;
 
-typedef float F32;
+typedef double F32;
 typedef double F64;
 
 struct Point {

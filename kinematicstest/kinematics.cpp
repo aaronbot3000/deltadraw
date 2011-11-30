@@ -8,7 +8,7 @@ Point rotate_xy(Point coord, F32 sin_theta, F32 cos_theta) {
 	return ret;
 }
 
-inline F32 r2(F32 in) {
+F32 r2(F32 in) {
 	return in * in;
 }
 
@@ -34,7 +34,7 @@ Status inv_kinematics(F32* result, Point target) {
 		trans.x = target_rot.x + SERVO_XOFF + HAND_XOFF;
 		trans.y = target_rot.y;
 		// Add servo offset and tool offset
-		trans.z = target_rot.z + SERVO_ZOFF + TOOL_ZOFF;
+		trans.z = target_rot.z + SERVO_ZOFF;
 
 		lower_radius = sqrt(r2(ARM_LOWER_LEN) - r2(trans.y));
 
@@ -68,56 +68,69 @@ Status inv_kinematics(F32* result, Point target) {
 }
 
 Status fwd_kinematics(Point* target, F32* angles) {
-	F32 a1 = ARM_UPPER_LEN * cos(angles[0]) - SERVO_XOFF - HAND_XOFF;
-	F32 c1 = ARM_UPPER_LEN * sin(angles[0]) - SERVO_ZOFF - HAND_ZOFF;
+	F32 arm1 = ARM_UPPER_LEN * cos(angles[0]);
+	F32 a1 = (arm1 - SERVO_XOFF - HAND_XOFF);
+	F32 c1 = ARM_UPPER_LEN * sin(angles[0]) - SERVO_ZOFF;
 
-	F32 arm2 = ARM_UPPER_LEN * cos(angles[1]);
-	F32 a2 = -(arm2 - SERVO_XOFF - HAND_XOFF) * COS_60;
-	F32 b2 = arm2 * SIN_60;
-	F32 c2 = ARM_UPPER_LEN * sin(angles[1]) - SERVO_ZOFF - HAND_ZOFF;
+	F32 arm2 = ARM_UPPER_LEN * cos(angles[2]);
+	F32 a2 = (arm2 - SERVO_XOFF - HAND_XOFF) * COS_120;
+	F32 b2 = (arm2 - SERVO_XOFF - HAND_XOFF) * SIN_120;
+	F32 c2 = ARM_UPPER_LEN * sin(angles[2]) - SERVO_ZOFF;
 
-	F32 arm3 = ARM_UPPER_LEN * cos(angles[2]);
-	F32 a3 = -(arm3 - SERVO_XOFF - HAND_XOFF) * COS_60;
-	F32 b3 = -arm3 * SIN_60;
-	F32 c3 = ARM_UPPER_LEN * sin(angles[2]) - SERVO_ZOFF - HAND_ZOFF;
+	F32 arm3 = ARM_UPPER_LEN * cos(angles[1]);
+	F32 a3 = (arm3 - SERVO_XOFF - HAND_XOFF) * COS_240;
+	F32 b3 = (arm3 - SERVO_XOFF - HAND_XOFF) * SIN_240;
+	F32 c3 = ARM_UPPER_LEN * sin(angles[1]) - SERVO_ZOFF;
 
-	F32 w1 = r2(a1) +		  r2(c1);
-	F32 w2 = r2(a2) + r2(b2) + r2(c2);
-	F32 w3 = r2(a3) + r2(b3) + r2(c3);
+	F32 p11 = 2 * (-a1 + a2);
+	F32 p12 = 2 * b2;
+	F32 p13 = 2 * (-c1 + c2);
 
-	F32 A = 2 * (a2 - a1);
-	F32 B = 2 * (b2);
-	F32 C = 2 * (c2 - c1);
+	F32 d1 = -(r2(a1) + r2(c1)) + (r2(a2) + r2(b2) + r2(c2));
 
-	F32 D = 2 * (a3 - a1);
-	F32 E = 2 * (b3);
-	F32 F = 2 * (c3 - c1);
+	F32 p21 = 2 * (-a2 + a3);
+	F32 p22 = 2 * (-b2 + b3);
+	F32 p23 = 2 * (-c2 + c3);
 
-	F32 dnm = B * D - A * E;
-	F32 dnm2 = r2(dnm);
+	F32 d2 = -(r2(a2) + r2(b2) + r2(c2)) + (r2(a3) + r2(b3) + r2(c3));
 
-	// a = (m1 * z + n1)/dnm
-	F32 m1 = -(C * D - A * F);
-	F32 n1 = D * (w2 - w1) - A * (w3 - w1);
+	F32 s1 = p12 * p23 - p13 * p22;
+	F32 s2 = p13 * p21 - p11 * p23;
+	F32 s3 = p11 * p22 - p12 * p21;
 
-	// b = (m2 * z + n2)/dnm;
-	F32 m2 = -(C * E - B * F);
-	F32 n2 = E * (w2 - w1) - B * (w3 - w1);
+	//printf("p11: %f p12: %f p21 %f p22 %f\n", p11, p12, p21, p22);
+	F32 py;
+	F32 px;
 
-	// m*z^2 + n*z + z = 0
-	F32 a = (r2(m1) + r2(m2)) / dnm2 + 1;
-	F32 b = 2 * ((m1 * n1 + m2 * n2) / dnm2 - (a1 * m1) / dnm - c1);
-	F32 c = r2(a1) + r2(c1) + (r2(n1) + r2(n2)) / dnm2 - 2 * a1 * n1 / dnm - r2(ARM_LOWER_LEN);
-
-	// discriminant
-	F32 d = r2(b) - 4 * a * c;
-	if (d < 0) {
-		printf("FFFFFFFUUUUUUUUUUUU Fwd failure\r\n");
-		return FAILURE; // non-existing point
+	if (p21 < 1E-6 || -p21 < 1E-6) {
+		py = d2 / p22;
+		// TODO: if p11 < 1E-6
+		px = (d1 - py * p12) / p11;
+	}
+	// TODO: if p11 < 1E-6 or (p12 * mult - p22) for some reason is zero
+	else {
+		F32 mult = p21 / p11;
+		py = (d1 * mult - d2) / (p12 * mult - p22);
+		px = (d2 - py * p22) / p21;
 	}
 
-	target->z = 0.5 * (-b + sqrt(d)) / a;
-	target->y = (m1 * target->z + n1) / dnm;
-	target->x = (m2 * target->z + n2) / dnm;
+	F32 A = r2(s1) + r2(s2) + r2(s3);
+	F32 B = 2 * (s1 * (-a1 + px) + s2 * py - s3 * c1);
+	F32 C = r2(-a1 + px) + r2(py) + r2(c1) - r2(ARM_LOWER_LEN);
+
+	/*
+	printf("%f\n", A);
+	printf("%f\n", B);
+	printf("%f\n", C);
+	*/
+
+	F32 t = (-B + sqrt(r2(B) - 4 * A * C)) / (2 * A);
+
+	target->x = s1 * t + px;
+	target->y = s2 * t + py;
+	target->z = s3 * t;
+
 	return SUCCESS;
 }
+
+
