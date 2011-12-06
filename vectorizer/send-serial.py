@@ -2,6 +2,7 @@
 
 from serial import Serial
 from vectorize import Vectorizer
+from rasterize import Rasterizer
 import struct, sys
 
 #INPUT = '4.1.05.tiff'
@@ -20,9 +21,6 @@ MIN_X = -3.75
 
 MAX_Y =  3.75
 MIN_Y = -3.75
-
-MOVE_POINT  = 1
-DRAW_POINT  = 2
 
 SERIAL_PORT = '/dev/ttyACM0'
 BAUD        = 115200
@@ -44,19 +42,12 @@ def main():
         print 'Wrong args'
         sys.exit(0)
     
-    vect   = Vectorizer()
     RES_X = int(sys.argv[1])
 
-    polys, RES_Y = vect.get_polygons(sys.argv[2], RES_X)
-
-    if RES_X > RES_Y:
-        MIN_Y *= float(RES_Y) / RES_X
-        MAX_Y *= float(RES_Y) / RES_X
-    elif RES_X < RES_Y:
-        MIN_X *= float(RES_X) / RES_Y
-        MAX_X *= float(RES_X) / RES_Y
-
-    print '\nThe image will contain %d points in %d polygons' %(vect.pointc, vect.polyc)
+    #data   = Vectorizer()
+    #points = data.get_polygons(sys.argv[2], RES_X, MIN_X, MAX_X, MIN_Y, MAX_Y)
+    data   = Rasterizer()
+    points = data.get_lines(sys.argv[2], MIN_X, MAX_X, MIN_Y, MAX_Y)
 
     serial = Serial(SERIAL_PORT, BAUD)
     serial.flushInput();
@@ -69,44 +60,21 @@ def main():
 
     print 'Starting transmission'
 
-    cur_p = polys
-    poly_count = 1
-    while cur_p:
-        print 'Starting polygon #%d' %poly_count
-
-        # Move to the first point in the polygon
-        next_x = -map_range(cur_p[0][0], 0, RES_X, MIN_X, MAX_X)
-        next_y = map_range(cur_p[0][1], 0, RES_Y, MIN_Y, MAX_Y)
-        data = struct.pack('<ffb', next_x, next_y, MOVE_POINT);
+    count = 1
+    for cur_p in points:
+        next_x = cur_p[0]
+        next_y = cur_p[1]
+        next_z = cur_p[2]
+        data = struct.pack('<ffb', next_x, next_y, next_z);
         send_wait_ack(data)
 
-        # Send the polygon
-        for point in cur_p:
-            next_x = -map_range(point[0], 0, RES_X, MIN_X, MAX_X)
-            next_y = map_range(point[1], 0, RES_Y, MIN_Y, MAX_Y)
-            data = struct.pack('<ffb', next_x, next_y, DRAW_POINT);
-            send_wait_ack(data)
-
-        next_x = -map_range(cur_p[0][0], 0, RES_X, MIN_X, MAX_X)
-        next_y = map_range(cur_p[0][1], 0, RES_Y, MIN_Y, MAX_Y)
-        data = struct.pack('<ffb', next_x, next_y, DRAW_POINT);
-        send_wait_ack(data)
-
-        next_x = -map_range(cur_p[0][0], 0, RES_X, MIN_X, MAX_X)
-        next_y = map_range(cur_p[0][1], 0, RES_Y, MIN_Y, MAX_Y)
-        data = struct.pack('<ffb', next_x, next_y, MOVE_POINT);
-        send_wait_ack(data)
-
-        print 'Sent polygon #%d\n' %poly_count
-        poly_count += 1
-        cur_p = cur_p.h_next()
+        print 'Sent point %d of %d\n' %(count, len(points))
+        count += 1
 
     # Send end of transmission
     send_wait_ack(END_DATA)
 
     raw_input("press enter to continue")
-    vect.del_mem()
-
 
 if __name__ == '__main__':
     main()

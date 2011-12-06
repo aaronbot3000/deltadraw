@@ -5,6 +5,10 @@ import cv, sys
 INPUT = 'lena.bmp'
 RES_X = 160
 
+MOVE_POINT  = 1
+DRAW_POINT  = 2
+
+
 class Vectorizer:
     # Vectorization settings
     __canny_lo = 30
@@ -13,7 +17,45 @@ class Vectorizer:
     __smooth_val = 3
     __poly_acc = 300
 
-    def get_polygons(self, image_name, newX):
+    def map_range(self, a, b1, b2, x1, x2):
+        return (float(a - b1) / float(b2 - b1)) * (x2 - x1) + x1
+
+    def __prep_for_machine(self, MIN_X, MAX_X, MIN_Y, MAX_Y):
+        points = []
+        if self.__newX > self.__newY:
+            MIN_Y *= float(self.__newY) / self.__newX
+            MAX_Y *= float(self.__newY) / self.__newX
+        elif self.__newX < self.__newY:
+            MIN_X *= float(self.__newX) / self.__newY
+            MAX_X *= float(self.__newX) / self.__newY
+
+        cur_p = self.polys_out
+        poly_count = 1
+        while cur_p:
+            # Move to the first point in the polygon
+            next_x = -self.map_range(cur_p[0][0], 0, self.__newX, MIN_X, MAX_X)
+            next_y = self.map_range(cur_p[0][1], 0, self.__newY, MIN_Y, MAX_Y)
+            points.append((next_x, next_y, MOVE_POINT))
+
+            # Send the polygon
+            for point in cur_p:
+                next_x = -self.map_range(point[0], 0, self.__newX, MIN_X, MAX_X)
+                next_y = self.map_range(point[1], 0, self.__newY, MIN_Y, MAX_Y)
+                points.append((next_x, next_y, DRAW_POINT))
+
+            next_x = -self.map_range(cur_p[0][0], 0, self.__newX, MIN_X, MAX_X)
+            next_y = self.map_range(cur_p[0][1], 0, self.__newY, MIN_Y, MAX_Y)
+            points.append((next_x, next_y, DRAW_POINT))
+
+            next_x = -self.map_range(cur_p[0][0], 0, self.__newX, MIN_X, MAX_X)
+            next_y = self.map_range(cur_p[0][1], 0, self.__newY, MIN_Y, MAX_Y)
+            points.append((next_x, next_y, MOVE_POINT))
+
+            poly_count += 1
+            cur_p = cur_p.h_next()
+        return points
+
+    def get_polygons(self, image_name, newX, MIN_X, MAX_X, MIN_Y, MAX_Y):
         cv.NamedWindow('Canny', cv.CV_WINDOW_NORMAL)
         cv.NamedWindow('Contours', cv.CV_WINDOW_NORMAL)
         cv.CreateTrackbar('smooth', 'Canny', self.__smooth_val, 10, self.__smooth_val_callback)
@@ -33,10 +75,11 @@ class Vectorizer:
         if key == ord('e'):
             sys.exit(0)
 
-        return self.polys_out, self.__newY
+        return self.__prep_for_machine(MIN_X, MAX_X, MIN_Y, MAX_Y)
 
     def __load_image(self, image_name, newX):
         orig = cv.LoadImageM(image_name)
+        self.__newX = newX
         self.__newY = int(float(newX) / orig.cols * orig.rows)
         self.__init_mem(newX, self.__newY)
 
