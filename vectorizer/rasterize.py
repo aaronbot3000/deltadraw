@@ -12,7 +12,7 @@ class Rasterizer:
     __resized = 0
 
     # inches
-    __stroke_width = 0.0145
+    __stroke_width = 0.0115
 
     def __map_range(self, a, b1, b2, x1, x2):
         return (float(a - b1) / float(b2 - b1)) * (x2 - x1) + x1
@@ -40,26 +40,33 @@ class Rasterizer:
                 shifted_pixel = []
                 if pixel:
                     if last_was_move:
-                        shifted_pixel.append((MIN_X + pixel[0][0] + j * self.__pixw, 
-                                             MIN_Y + pixel[0][1] + i * self.__pixh,
+                        shifted_pixel.append((-self.__draww/2 + pixel[0][0] + j * self.__pixw, 
+                                             -(-self.__drawh/2 + pixel[0][1] + i * self.__pixh),
                                              MOVE_POINT))
                         last_was_move = False
-                    shifted_pixel.extend([(MIN_X + x[0] + j * self.__pixw, 
-                                      MIN_Y + x[1] + i * self.__pixh,
+                    shifted_pixel.extend([(-self.__draww/2 + x[0] + j * self.__pixw, 
+                                      -(-self.__drawh/2 + x[1] + i * self.__pixh),
                                       DRAW_POINT) for x in pixel])
                 else:
-                    if points:
+                    if points and not last_was_move:
                         shifted_pixel = [(points[-1][0], points[-1][1], MOVE_POINT)]
                         last_was_move = True
                 points.extend(shifted_pixel)
+
+            if not last_was_move:
+                shifted_pixel = [(points[-1][0], points[-1][1], MOVE_POINT)]
+                points.extend(shifted_pixel)
+                last_was_move = True
 
         return points
 
     def __fill_pixel(self, r, c):
         fulld = self.__pixw / self.__stroke_width
         value = cv.Get2D(self.__resized, r, c)[0]
-        density = int(self.__map_range(value, 0, 255, fulld, 0))
-        if not density:
+        # Gamma correction
+        actual = self.__map_range(value, 0, 255, 0, 1) ** (1 / 2.2)
+        density = int(self.__map_range(actual, 0, 1, fulld, 0))
+        if not density or density < 0:
             return []
 
         gap = self.__pixw / density
@@ -79,9 +86,9 @@ class Rasterizer:
 
         if orig.cols > orig.rows:
             self.__draww = self.__plotw
-            self.__drawh = orig.cols / orig.rows * self.__plotw
+            self.__drawh = float(orig.cols) / orig.rows * self.__plotw
         else:
-            self.__draww = orig.cols / orig.rows * self.__ploth
+            self.__draww = float(orig.cols) / orig.rows * self.__ploth
             self.__drawh = self.__ploth
 
     def __resize_image(self, newX):
@@ -90,10 +97,11 @@ class Rasterizer:
             del self.__resized
 
         self.__resized = cv.CreateMat(newY, newX, cv.CV_8UC1)
+        self.__gamma_c = cv.CreateMat(newY, newX, cv.CV_8UC1)
         cv.Resize(self.__gray, self.__resized)
-
-        self.__pixw = self.__plotw / self.__resized.cols
-        self.__pixh = self.__ploth / self.__resized.rows
+        
+        self.__pixw = self.__draww / self.__resized.cols
+        self.__pixh = self.__drawh / self.__resized.rows
         cv.ShowImage('Output', self.__resized)
 
     def __width_callback(self, value):
