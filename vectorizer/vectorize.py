@@ -33,22 +33,22 @@ class Vectorizer:
         poly_count = 1
         while cur_p:
             # Move to the first point in the polygon
-            next_x = -self.map_range(cur_p[0][0], 0, self.__newX, MIN_X, MAX_X)
-            next_y = self.map_range(cur_p[0][1], 0, self.__newY, MIN_Y, MAX_Y)
+            next_x = self.map_range(cur_p[0][0], 0, self.__newX, MIN_X, MAX_X)
+            next_y = -self.map_range(cur_p[0][1], 0, self.__newY, MIN_Y, MAX_Y)
             points.append((next_x, next_y, MOVE_POINT))
 
             # Send the polygon
             for point in cur_p:
-                next_x = -self.map_range(point[0], 0, self.__newX, MIN_X, MAX_X)
-                next_y = self.map_range(point[1], 0, self.__newY, MIN_Y, MAX_Y)
+                next_x = self.map_range(point[0], 0, self.__newX, MIN_X, MAX_X)
+                next_y = -self.map_range(point[1], 0, self.__newY, MIN_Y, MAX_Y)
                 points.append((next_x, next_y, DRAW_POINT))
 
-            next_x = -self.map_range(cur_p[0][0], 0, self.__newX, MIN_X, MAX_X)
-            next_y = self.map_range(cur_p[0][1], 0, self.__newY, MIN_Y, MAX_Y)
+            next_x = self.map_range(cur_p[0][0], 0, self.__newX, MIN_X, MAX_X)
+            next_y = -self.map_range(cur_p[0][1], 0, self.__newY, MIN_Y, MAX_Y)
             points.append((next_x, next_y, DRAW_POINT))
 
-            next_x = -self.map_range(cur_p[0][0], 0, self.__newX, MIN_X, MAX_X)
-            next_y = self.map_range(cur_p[0][1], 0, self.__newY, MIN_Y, MAX_Y)
+            next_x = self.map_range(cur_p[0][0], 0, self.__newX, MIN_X, MAX_X)
+            next_y = -self.map_range(cur_p[0][1], 0, self.__newY, MIN_Y, MAX_Y)
             points.append((next_x, next_y, MOVE_POINT))
 
             poly_count += 1
