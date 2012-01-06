@@ -12,15 +12,15 @@
 #define MAX_TRAV_SIZE   0.003
 //#define MAX_STEP_SIZE   0.0006
 //#define MAX_STEP_SIZE   0.001
-#define MAX_STEP_SIZE   0.0005
+#define MAX_STEP_SIZE   0.002
 //#define MIN_STEP_SIZE   0.00008
 //#define MIN_STEP_SIZE   0.00016
-#define MIN_STEP_SIZE   0.00024
+#define MIN_STEP_SIZE   0.00012
 
 #define MIN_STEP_FRAC   3
 
 
-#define MIN_DIST 0.0005
+#define MIN_DIST 0.00025
 
 #define ACCL_ZONE 0.4 // inches
 //#define TIMER_ON

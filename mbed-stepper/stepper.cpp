@@ -19,12 +19,16 @@ static F32 angles[3];
 2: 13729
 3: 16502
 
+1: 13440
+2: 13731
+3: 16307
+
 angle:
 13.5744 deg or 6.7872 deg
 */
 
 static float raw_angles[3];
-static const float calib_angles[3] = {13471, 13729, 16502};
+static const float calib_angles[3] = {13440, 13731, 16307};
 static const float calib_angle = -0.90386;
 
 static const S32 samples = 24;
