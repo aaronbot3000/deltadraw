@@ -50,8 +50,8 @@ def main():
     points = data.get_lines(sys.argv[2], MIN_X, MAX_X, MIN_Y, MAX_Y)
 
     serial = Serial(SERIAL_PORT, BAUD)
-    serial.flushInput();
-    serial.flushOutput();
+    serial.flushInput()
+    serial.flushOutput()
 
     print 'Waiting for MCU'
 
