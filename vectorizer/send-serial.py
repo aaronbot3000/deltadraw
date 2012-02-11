@@ -44,10 +44,12 @@ def main():
     
     RES_X = int(sys.argv[1])
 
-    #data   = Vectorizer()
-    #points = data.get_polygons(sys.argv[2], RES_X, MIN_X, MAX_X, MIN_Y, MAX_Y)
-    data   = Rasterizer()
-    points = data.get_lines(sys.argv[2], MIN_X, MAX_X, MIN_Y, MAX_Y)
+    if RES_X < 0:
+        data   = Rasterizer()
+        points = data.get_lines(sys.argv[2], MIN_X, MAX_X, MIN_Y, MAX_Y)
+    else:
+        data   = Vectorizer()
+        points = data.get_polygons(sys.argv[2], RES_X, MIN_X, MAX_X, MIN_Y, MAX_Y)
 
     serial = Serial(SERIAL_PORT, BAUD)
     serial.flushInput()
