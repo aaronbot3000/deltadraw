@@ -15,9 +15,6 @@ static F32 angles[3];
 
 /*
 45 top: -.90386 rad
-1: 13471
-2: 13729
-3: 16502
 
 1: 13440
 2: 13731
@@ -28,7 +25,7 @@ angle:
 */
 
 static float raw_angles[3];
-static const float calib_angles[3] = {13440, 13731, 16307};
+static const float calib_angles[3] = {13440, 13731, 14800};
 static const float calib_angle = -0.90386;
 
 static const S32 samples = 24;

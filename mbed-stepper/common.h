@@ -5,7 +5,7 @@
 #include "math.h"
  
 #define ARM_UPPER_LEN 2.75
-#define ARM_LOWER_LEN 11.71875
+#define ARM_LOWER_LEN 13.125
 
 #define HAND_XOFF  1.09725
 #define HAND_ZOFF -0.20975
@@ -15,8 +15,8 @@
 #define SERVO_XOFF -4.0096
 #define SERVO_ZOFF  0.7087
 
-#define MAX_Z 11
-#define MIN_Z 8.0
+#define MAX_Z 13
+#define MIN_Z 10.0
 
 #define MAX_X  3.85
 #define MIN_X -3.85
